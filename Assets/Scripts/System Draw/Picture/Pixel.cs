@@ -50,7 +50,7 @@ namespace APP
                 {
                     if(arg is PixelConfig)
                     {
-                        m_Config = (PixelConfig)args[0];
+                        m_Config = (PixelConfig)arg;
                         
                         m_Renderer.sprite = m_Config.Sprite;
                         

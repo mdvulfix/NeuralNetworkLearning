@@ -34,6 +34,9 @@ namespace APP.Brain
                 m_Branches.Add(Branch.Get(branchHead, branchTail, branchWidth));
             }
         }
-
+        
+        public virtual void Init() { }
+        public virtual void Dispose() { }
+    
     }
 }

@@ -25,7 +25,7 @@ namespace APP
                 {
                     if(arg is PencilControllerConfig)
                     {
-                        m_Config = (PencilControllerConfig)args[0];
+                        m_Config = (PencilControllerConfig)arg;
                         
                         m_PictureController = m_Config.PictureController;
                         m_ColorDraw = m_Config.ColorDraw;

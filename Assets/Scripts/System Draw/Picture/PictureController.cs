@@ -25,7 +25,7 @@ namespace APP
                 {
                     if(arg is PictureControllerConfig)
                     {
-                        m_Config = (PictureControllerConfig)args[0];
+                        m_Config = (PictureControllerConfig)arg;
 
                         m_BackgroundColor = m_Config.BackgroundColor;
                         m_HoverColor = m_Config.HoverColor;

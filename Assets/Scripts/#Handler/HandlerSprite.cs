@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace APP.Handler
+namespace APP
 {
     public static class HandlerSprite
     {

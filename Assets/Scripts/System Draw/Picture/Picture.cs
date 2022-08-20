@@ -43,7 +43,7 @@ namespace APP
                 {
                     if(arg is PictureConfig)
                     {
-                        m_Config = (PictureConfig)args[0];
+                        m_Config = (PictureConfig)arg;
 
                         m_Width = m_Config.Width;
                         m_Height = m_Config.Height;

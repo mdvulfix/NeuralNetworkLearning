@@ -35,5 +35,8 @@ namespace APP.Brain
             }
         }
 
+        public virtual void Init() { }
+        public virtual void Dispose() { }
+    
     }
 }
