@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace APP.Brain
@@ -10,8 +11,9 @@ namespace APP.Brain
         [SerializeField] private Vector3 m_Head;
         [SerializeField] private Vector3 m_Tail;
         [SerializeField] private float m_Width;
-        
-        
+
+        private List<Сharge> m_СhargeReceived;
+
         public Vector3 Head => m_Head;
         public Vector3 Tail => m_Tail;
         public float Width => m_Width;
@@ -22,6 +24,22 @@ namespace APP.Brain
             m_Tail = (Vector3) args[1];
             m_Width = (float) args[2];
         }
+
+        public void Impulse()
+        { 
+
+        }
+
+        public virtual void CargeCalculate()
+        { 
+            foreach (var charge in m_СhargeReceived)
+            {
+                
+            }
+        }
+
+
+
 
         public static T Get(Vector3 head, Vector3 tail, float width)
         {

@@ -201,6 +201,10 @@ namespace APP.Brain
         }
 
 
+
+        
+
+
         private void Awake() =>
             Configure();
 

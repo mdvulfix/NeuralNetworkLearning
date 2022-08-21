@@ -1,14 +1,15 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+
+using APP.Brain;
 
 
 namespace APP
 {
     [Serializable]
-    public class Picture
+    public class Picture: IRecognizable
     {
         private PictureConfig m_Config;
         
@@ -85,6 +86,9 @@ namespace APP
 
             m_Pixels.Clear();
         }
+
+        public IEnumerable<ISensible> GetSensibles() =>
+            m_Pixels;
     }
 
     public struct PictureConfig

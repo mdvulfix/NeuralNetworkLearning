@@ -3,17 +3,28 @@ using UnityEngine;
 
 namespace APP.Brain
 {
-    public class Сharge
+    public class Сharge : MonoBehaviour
     {
 
-        private float m_Energy = 10;
-        private float m_Lifetime = 100;
+        [SerializeField] private float m_Energy;
+        private float m_EnergyDefault = 0.1f;
 
-        private List<Vector3> m_Path;
+        public float Energy => m_Energy;
+        //private float m_Lifetime = 100;
+        //private List<Vector3> m_Path;
 
-        public void Start ()
+        public void SetEnergy() =>
+            SetEnergy(m_EnergyDefault);
+
+        public void SetEnergy(float energy)
         {
+            m_Energy = energy;
+        }
 
+        public static Сharge Get()
+        {
+            var obj = new GameObject("Сharge");
+            return obj.AddComponent<Сharge>();
         }
 
     }

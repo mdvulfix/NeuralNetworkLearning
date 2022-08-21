@@ -6,6 +6,11 @@ namespace APP.Brain
 {
     public class Brain : MonoBehaviour, IConfigurable
     {
+        private BrainConfig m_Config;
+
+        private IRecognizable m_Recognizable;
+        private IEnumerable m_Sensors;
+        
 
         private List<Neuron> m_Neurons;
         private NeuronController m_NeuronController;
@@ -13,11 +18,29 @@ namespace APP.Brain
         private Neuron[,,] m_Matrix;
         private Vector3Int m_MatrixSize;
         private int m_MatrixDimension = 8;
-
-
+        
 
         public virtual void Configure(params object[] args)
         {
+            if(args.Length > 0)
+            {
+                foreach (var arg in args)
+                {
+                    if(arg is BrainConfig)
+                    {
+                        m_Config = (BrainConfig)arg;
+                        
+                        m_Recognizable = m_Config.Recognizable;
+                        m_Sensors = m_Recognizable.GetSensibles();
+
+
+                    }
+                }
+            }
+            
+            
+            
+            
             m_Neurons = new List<Neuron>();
             m_MatrixSize = new Vector3Int(m_MatrixDimension, m_MatrixDimension, m_MatrixDimension);
             m_Matrix = new Neuron[m_MatrixSize.x, m_MatrixSize.y, m_MatrixSize.z];
@@ -25,6 +48,15 @@ namespace APP.Brain
 
         public virtual void Init()
         {
+            
+            // Build input layer
+            
+            
+            
+            
+            
+            
+            
             for (int z = 0; z < m_MatrixSize.z; z++)
             { 
                 for (int y = 0; y < m_MatrixSize.y; y++)
@@ -77,6 +109,22 @@ namespace APP.Brain
             
         }
 
+
+    }
+
+    public class BrainConfig
+    {
+        public BrainConfig(IRecognizable recognizable)
+        {
+            Recognizable = recognizable;
+        }
+
+        public IRecognizable Recognizable { get; private set; }
+    }
+
+    public interface IRecognizable
+    {
+        IEnumerable<ISensible> GetSensibles();
 
     }
 }

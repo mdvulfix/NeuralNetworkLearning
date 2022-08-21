@@ -1,10 +1,12 @@
 using System;
 using UnityEngine;
 
+using APP.Brain;
+
 namespace APP
 {
     [Serializable]
-    public class Pixel: MonoBehaviour
+    public class Pixel: MonoBehaviour, ISensible, IUpdateble
     {
         private PixelConfig m_Config;
 
@@ -14,13 +16,15 @@ namespace APP
         private BoxCollider2D m_Collider;
         private SpriteRenderer m_Renderer;
 
+        
+
         private Color m_ColorDefault = Color.black;
         private Color m_ColorHover = Color.grey;
 
         [SerializeField] private bool m_IsActive;
 
         public bool IsActive => m_IsActive;
-
+        public Sensor Sensor {get; private set; }
 
 
         public virtual void Configure(params object[] args)
@@ -90,6 +94,16 @@ namespace APP
             m_Renderer.color = color;
         }
 
+        public void SetSensor(Sensor sensor)
+        {
+            Sensor = sensor;
+        }
+
+        public void Update()
+        {
+            Sensor.Excite();
+        }
+
 
 
         private void OnMouseOver()
@@ -110,7 +124,11 @@ namespace APP
                 SetColor(m_ColorDefault);
             }
         }
-    
+
+
+
+
+
         /*
         private void Awake()
         {
@@ -124,8 +142,8 @@ namespace APP
             Configure(pixelConfig);
         }
         */
-            
-    
+
+
     }
 
 
