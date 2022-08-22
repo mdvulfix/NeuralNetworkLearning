@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace APP
 {
-    public class HandlerVector : MonoBehaviour
+    public class HandlerVector
     {
         public float X { get; set; }
         public float Y { get; set; }

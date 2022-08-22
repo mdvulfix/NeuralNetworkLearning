@@ -17,6 +17,7 @@ namespace APP
         [SerializeField] private PictureController m_PictureController;
         
         [SerializeField] private UpdateController m_UpdateController;
+        [SerializeField] private AsyncController m_AsyncController;
         
         
         private Color m_BackgroundColor = Color.black;

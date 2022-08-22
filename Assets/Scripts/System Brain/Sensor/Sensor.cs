@@ -9,6 +9,10 @@ namespace APP.Brain
     {
 
         [SerializeField] private float m_ExciteRate;
+        
+        //Fixed frame rate = 0.02;
+        //Target frame number = 50 in ms;
+        
         private float m_ExciteRateDefault = 5;
 
         private List<Branch> m_Branches;
@@ -51,7 +55,7 @@ namespace APP.Brain
 
         public void Excite()
         {
-            m_ExciteRate -= Time.deltaTime;
+            m_ExciteRate -= Time.fixedDeltaTime;
 
             if (m_ExciteRate <= 0)
             {

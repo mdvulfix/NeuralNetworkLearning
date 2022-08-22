@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace APP.Brain
@@ -9,13 +10,17 @@ namespace APP.Brain
         private BrainConfig m_Config;
 
         private IRecognizable m_Recognizable;
-        private IEnumerable m_Sensors;
+        private IEnumerable<ISensible> m_Sensibles;
         
 
         private List<Neuron> m_Neurons;
         private NeuronController m_NeuronController;
 
-        private Neuron[,,] m_Matrix;
+        private Neuron[,,] m_LayerMatrixInput;
+        private Neuron[,,] m_LayerMatrixAnalize;
+        
+        
+        
         private Vector3Int m_MatrixSize;
         private int m_MatrixDimension = 8;
         
@@ -31,7 +36,7 @@ namespace APP.Brain
                         m_Config = (BrainConfig)arg;
                         
                         m_Recognizable = m_Config.Recognizable;
-                        m_Sensors = m_Recognizable.GetSensibles();
+                        m_Sensibles = m_Recognizable.GetSensibles();
 
 
                     }
@@ -43,7 +48,7 @@ namespace APP.Brain
             
             m_Neurons = new List<Neuron>();
             m_MatrixSize = new Vector3Int(m_MatrixDimension, m_MatrixDimension, m_MatrixDimension);
-            m_Matrix = new Neuron[m_MatrixSize.x, m_MatrixSize.y, m_MatrixSize.z];
+            m_LayerMatrixAnalize = new Neuron[m_MatrixSize.x, m_MatrixSize.y, m_MatrixSize.z];
         }   
 
         public virtual void Init()
@@ -51,11 +56,27 @@ namespace APP.Brain
             
             // Build input layer
             
+            var sensorNumber  = (from ISensible sensible in m_Sensibles select sensible).Count();
             
+            var inputLayerSize = new Vector3Int(sensorNumber/2, sensorNumber - sensorNumber/2, 0);
+            m_LayerMatrixInput = new Neuron[inputLayerSize.x, inputLayerSize.y, inputLayerSize.z];
             
+            for (int z = 0; z < inputLayerSize.z; z++)
+            { 
+                for (int y = 0; y < inputLayerSize.y; y++)
+                { 
+                    for (int x = 0; x < inputLayerSize.x; x++)
+                    { 
+                        var position = new Vector3(x - (inputLayerSize.x/2), y - (inputLayerSize.y/2), z - inputLayerSize.z/2);
+                        var size = Random.Range(0f, 100f);
+                        var energy = Random.Range(0f, 100f);
+                        m_Neurons.Add(m_LayerMatrixInput[x, y, z] = Clone(size, energy, position));
+                    }
+                }
+            }
             
-            
-            
+            /*
+            // Build analize layer
             
             for (int z = 0; z < m_MatrixSize.z; z++)
             { 
@@ -70,6 +91,7 @@ namespace APP.Brain
                     }
                 }
             }
+            */
         }
 
         public virtual void Dispose()

@@ -18,8 +18,9 @@ namespace APP
 
             switch (index)
             {
-                default : Debug.LogWarning($"SpriteExtension: {index} is not found!");
-                return null;
+                default: 
+                    Debug.LogWarning($"SpriteExtension: {index} is not found!");
+                    return null;
 
                 case SpriteIndex.Square:
                         return byDefault ? SpriteSquare.Get() : SpriteSquare.Get(folderPath, name);

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 
 
@@ -36,9 +37,13 @@ namespace APP
 
         public virtual void Init()
         {
+            
             var pictureConfig = new PictureConfig(m_Widht, m_Height, m_BackgroundColor, m_HoverColor);
             
-            Picture = new Picture();
+            Picture = Picture.Get();
+            HandlerAsync.Start(() => AwaitSceneObjectLoadingAsync(Picture));
+            
+            
             Picture.Configure(pictureConfig);
             Picture.Init();
         }
@@ -57,6 +62,17 @@ namespace APP
             pixel.SetColor(color, ColorMode.Draw);
 
 
+    
+        public IEnumerator AwaitSceneObjectLoadingAsync(ILoadable loadable, float awaiting = 5f)
+        {
+            while (loadable.IsLoaded == false && awaiting > 0)
+            {
+                yield return new WaitForSeconds(1);
+                awaiting -= Time.deltaTime;
+            }
+        }
+    
+    
     }
 
     public struct PictureControllerConfig

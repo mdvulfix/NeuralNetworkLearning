@@ -5,15 +5,12 @@ using UnityEngine;
 
 using APP.Brain;
 
-
 namespace APP
 {
     [Serializable]
-    public class Picture: IRecognizable
+    public class Picture: MonoBehaviour, IRecognizable, ILoadable
     {
         private PictureConfig m_Config;
-        
-        private GameObject m_GameObject;
         
         private readonly string FOLDER_SPRITES = "Sprites";
         private string m_SpriteLabel = "box_white";
@@ -29,12 +26,19 @@ namespace APP
 
         private Sprite m_Sprite;
         
+        public bool IsLoaded {get; private set; }
+        public GameObject GameObject {get; private set; }
+    
         public Pixel PixelActive => m_Pixels.Where(pixel => pixel.IsActive == true).First();
 
-
+        
         public virtual void Configure(params object[] args)
         {
-            m_GameObject = new GameObject("Picture");
+            
+            //GameObject = new GameObject("Picture");
+            GameObject = gameObject;
+            GameObject.name = "Picture";
+
             m_Sprite = Resources.Load<Sprite>($"{FOLDER_SPRITES}/{m_SpriteLabel}");
 
 
@@ -60,12 +64,14 @@ namespace APP
 
         public virtual void Init()
         {
+            
+            /*
             for (int x = 0; x < m_Width; x++)
             {
                 for (int y = 0; y < m_Height; y++)
                 {
                     var position = new Vector3(x - m_Width/2, y - m_Height/2);
-                    var pixelConfig = new PixelConfig(position, m_GameObject, m_Sprite, m_BackgroundColor, m_HoverColor);
+                    var pixelConfig = new PixelConfig(position, GameObject, m_Sprite, m_BackgroundColor, m_HoverColor);
                     
                     var objPixel = new GameObject("Pixel");
                     var pixel = objPixel.AddComponent<Pixel>();
@@ -76,19 +82,43 @@ namespace APP
                     m_Pixels.Add(m_Matrix[x, y] = pixel);
                 }
             }
+            */
         }
 
         public virtual void Dispose()
         {
+            /*
             foreach (var pixel in m_Pixels)
                 pixel.Dispose();
 
 
             m_Pixels.Clear();
+            */
         }
 
+        
+        
+    
+        
         public IEnumerable<ISensible> GetSensibles() =>
             m_Pixels;
+
+        
+
+        private void OnEnable() =>
+            IsLoaded = true;
+
+        private void OnDisable() =>
+            IsLoaded = false;
+    
+
+        public static Picture Get()
+        {
+            var obj = new GameObject("Picture");
+            return obj.AddComponent<Picture>();
+        }
+
+
     }
 
     public struct PictureConfig
