@@ -26,12 +26,13 @@ namespace APP
 
         private Sprite m_Sprite;
         
+        public bool IsActive {get; private set; }
         public bool IsLoaded {get; private set; }
         public GameObject GameObject {get; private set; }
     
         public Pixel PixelActive => m_Pixels.Where(pixel => pixel.IsActive == true).First();
 
-        
+
         public virtual void Configure(params object[] args)
         {
             
@@ -96,10 +97,13 @@ namespace APP
             */
         }
 
-        
-        
-    
-        
+
+        public bool Load() { return true; }
+        public bool Unload() { return true; }
+        public bool Activate() { return true; }
+        public bool Deactivate() { return true; }
+
+
         public IEnumerable<ISensible> GetSensibles() =>
             m_Pixels;
 
