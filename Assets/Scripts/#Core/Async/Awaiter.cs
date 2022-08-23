@@ -2,6 +2,8 @@ using System;
 using System.Collections;
 using UnityEngine;
 
+using APP.Console;
+
 namespace APP
 {
     public class Awaiter : MonoBehaviour, IConfigurable, ILoadable, IPoolable
@@ -10,6 +12,8 @@ namespace APP
         [SerializeField] private bool m_IsReady;
         [SerializeField] private bool m_IsActive;
         [SerializeField] private bool m_IsLoaded;
+       
+        private Func<IEnumerator> ActiveOperationAsyncFunc;
 
         public bool IsReady => m_IsReady;
         public bool IsActive => m_IsActive;
@@ -47,6 +51,17 @@ namespace APP
             return true;
         }
         
+        public bool Load(out Awaiter awaiter)
+        {
+            
+            Activate();
+            m_IsLoaded = true;
+            awaiter = this;
+            return true;
+        }
+
+
+        
         public bool Unload()
         {
             m_IsLoaded = false;
@@ -71,44 +86,39 @@ namespace APP
             return true;
         }
 
-        public void Run(Func<bool> funcAsync, int attamps = 3)
+        public void Run(IEnumerator operationAsync)
         {
-            m_IsReady = false;
-            Debug.Log($"Awaiter {this.GetHashCode()} start... Ready: {m_IsReady}");
+            SetStatus(false);
+            ActiveOperationAsyncFunc = () => operationAsync;
             
-            StopCoroutine(nameof(AwaitOperation));
-            StartCoroutine(AwaitOperation(funcAsync, attamps));
+            StopCoroutine(ActiveOperationAsyncFunc());
 
-            m_IsReady = true;
-            Debug.Log($"Awaiter {this.GetHashCode()} finish... Ready: {m_IsReady}");
+            try
+            {
+                StartCoroutine(ActiveOperationAsyncFunc());
+                Debug.Log("Async operation started...");                
+            }
+            catch (Exception exception)
+            {
+                Debug.Log(exception.Message);
+                Stop();
+            }
         }
+
 
         public void Stop()
         {
-            StopCoroutine(nameof(AwaitOperation));
+            StopCoroutine((ActiveOperationAsyncFunc()));
+            Debug.Log("Async operation finished...");    
+            SetStatus(true);
         }
 
-        public IEnumerator AwaitOperation(Func<bool> operationAsync, int attamps, int awaiting = 1)
+
+        private void SetStatus(bool isReady)
         {
-            while(attamps > 0)
-            {
-                attamps--;
-                Debug.Log("Waiting for finish operation: " + attamps);
-
-                if (operationAsync.Invoke())
-                { 
-                    Debug.Log("Operation: Success!");
-                    yield return null;
-                }
-                
-                yield return new WaitForSeconds(awaiting);
-    
-            } 
-            
-            Debug.LogWarning("Operation: Failed!");
-            Debug.LogWarning("Operation done by time delay!");
+            m_IsReady =  isReady;
+            Debug.Log($"Awaiter {this.GetHashCode()} start... Ready: {m_IsReady}");
         }
-
 
         // UNITY //
         private void Awake() =>
@@ -123,15 +133,18 @@ namespace APP
 
 
         // FACTORY //
-        public static Awaiter Get()
+        public static Awaiter Get(GameObject parent = null)
         {
             var obj = new GameObject("Awaiter");
-            obj.transform.position = Vector3.zero;
             obj.SetActive(false);
             
+            if(parent != null)
+                obj.transform.SetParent(parent.transform);
+
+            obj.transform.position = Vector3.zero;
+
             return obj.AddComponent<Awaiter>();
         }
     }
-
-
 }
+
