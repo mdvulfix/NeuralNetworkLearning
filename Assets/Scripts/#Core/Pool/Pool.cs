@@ -23,7 +23,7 @@ namespace APP
                 foreach (var arg in args)
                 {
                     if (arg is PoolConfig)
-                        m_Config = (PoolConfig) args[0];
+                        m_Config = (PoolConfig) arg;
                 }
             }
 

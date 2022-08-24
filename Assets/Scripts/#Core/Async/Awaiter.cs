@@ -19,12 +19,17 @@ namespace APP
         public bool IsActive => m_IsActive;
         public bool IsLoaded => m_IsLoaded;
 
-   
+        
+
         public event Action<Awaiter> Initialized;
         public event Action<Awaiter> Disposed;
-        
-        
-        //public Func<IEnumerator>
+
+        public event Action<Awaiter> FuncReceived;
+        public event Action<Awaiter> FuncStarted;
+        public event Action<Awaiter> FuncCompleted;
+
+
+
         
         
         public virtual void Configure(params object[] args)
@@ -86,17 +91,22 @@ namespace APP
             return true;
         }
 
-        public void Run(IEnumerator operationAsync)
+        public void SetFunc(IEnumerator operatonAsync)
         {
-            SetStatus(false);
-            ActiveOperationAsyncFunc = () => operationAsync;
-            
+            ActiveOperationAsyncFunc = () => operatonAsync;
+            FuncReceived?.Invoke(this);
+        }
+
+        public void Run()
+        {
             StopCoroutine(ActiveOperationAsyncFunc());
 
             try
             {
+                FuncStarted?.Invoke(this); 
                 StartCoroutine(ActiveOperationAsyncFunc());
-                Debug.Log("Async operation started...");                
+                Debug.Log("Async operation started...");  
+                             
             }
             catch (Exception exception)
             {
@@ -106,11 +116,12 @@ namespace APP
         }
 
 
+
         public void Stop()
         {
             StopCoroutine((ActiveOperationAsyncFunc()));
             Debug.Log("Async operation finished...");    
-            SetStatus(true);
+            FuncCompleted?.Invoke(this);
         }
 
 

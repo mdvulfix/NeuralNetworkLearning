@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace APP.Console
 {
@@ -13,21 +14,25 @@ namespace APP.Console
         [SerializeField] private GameObject FOLDER_SPAWNED;
         [SerializeField] private GameObject FOLDER_AWAITERS;
         [SerializeField] private GameObject FOLDER_AWAITERS_POOL;
-        
-        
-        private List<Awaiter> m_Pool;
-        private List<Awaiter> m_Awaiter;
 
-        private Queue<FuncAsyncInfo> m_FuncAwaitingList;
+        private Pool m_AwaiterPool;
+        private int m_AwaiterPoolLimit = 5;
+
+
+        private Awaiter m_AwaiterActive;
+
+        private List<Awaiter> m_AwaiterIsReady;
+
+        private Action AwaiterCallback;
+
 
         private void Awake()
         {
-            m_Pool = new List<Awaiter>(10);
-            m_Awaiter = new List<Awaiter>(10);
-            m_FuncAwaitingList = new Queue<FuncAsyncInfo>(50);
+            m_AwaiterPool = Pool.Get(new PoolConfig());
+            m_AwaiterIsReady = new List<Awaiter>(15);
 
-            for (int i = 0; i < 10; i++)
-                m_Pool.Add(Awaiter.Get(FOLDER_AWAITERS_POOL));
+            for (int i = 0; i < 3; i++)
+                m_AwaiterPool.Push(Awaiter.Get(FOLDER_AWAITERS_POOL));
 
             //m_Funcs.Enqueue(OperationAsync_1());
             //m_Funcs.Enqueue(OperationAsync_2());
@@ -39,89 +44,111 @@ namespace APP.Console
         private void Start()
         {
 
-            var awaitersInReadyStateNumber = 5;
-            var awaitersAwaliable = m_Pool.Count - awaitersInReadyStateNumber;
-
-            if (awaitersAwaliable < 0)
+            for (int i = 0; i < 3; i++)
             {
-                for (int i = 0; i < -1 * awaitersAwaliable; i++)
-                    m_Pool.Add(Awaiter.Get());
-            }
+                var label = "Cahce " + i;
+                var cache = Spawn(label, FOLDER_SPAWNED);
+                cache.Setup(label, Random.Range(1, 10));
 
-            for (int i = 0; i < awaitersInReadyStateNumber; i++)
-            {
-                var awaiterInReadyState = m_Pool[i];
-                awaiterInReadyState.transform.SetParent(FOLDER_AWAITERS.transform);
-                awaiterInReadyState.Load();
+                var awaiter = GetAwaiterInReadyState();
+                ExecuteAsync(awaiter, cache.LoadAsync(() => awaiter.Stop()));
 
             }
 
-
-            var cache = Spawn("Cahce 1", FOLDER_SPAWNED);
-            
-            var awaiter = FuncAsyncGetAwaiterInReadyState();
-            
-            FuncAsyncAdd(awaiter, cache.LoadAsync(() => awaiter.Stop()));
-            FuncAsyncExecute();
-
         }
 
-        private Awaiter FuncAsyncGetAwaiterInReadyState()
+        private void ExecuteAsync(Awaiter awaiter, IEnumerator operationAsync)
         {
-            var awaitersInReadyState = from awaiter in m_Awaiter
-                                       where awaiter.IsReady == true
-                                       select awaiter;
+            awaiter.SetFunc(operationAsync);
+            awaiter.Run();
+        }
 
-            if (awaitersInReadyState.Count() == 0)
-                if(m_Pool[0].Load(out var awaiter))
-                    return awaiter;
-        
-            return awaitersInReadyState.First();
-        
-        }
-        
-        private void FuncAsyncAdd(Awaiter awaiter, IEnumerator operationAsync)
+        private Awaiter GetAwaiterInReadyState()
         {
-            m_FuncAwaitingList.Enqueue(new FuncAsyncInfo(awaiter, operationAsync));
-        }
-        
-        private void FuncAsyncExecute()
-        {
-            if(m_FuncAwaitingList.Count == 0)
-                return;
-            
-            foreach (var funcInfo in m_FuncAwaitingList)
+            if (m_AwaiterIsReady.Count > 0)
             {
-                var awaiter = funcInfo.Awaiter;
-                var operation = funcInfo.OperationAsync;
-                awaiter.Run(operation);
+                var awaiter = (from Awaiter awaiterIsReady in m_AwaiterIsReady
+                               where awaiterIsReady.IsReady == true
+                               select awaiterIsReady).First();
+                return awaiter;
+            }
+            else
+            {
+                if (PoolPopAwaiter(out var awaiter) == false)
+                    throw new Exception("Pool is empty!");
 
+                PoolUpdate();
+                return awaiter;
             }
         }
+
+        private bool PoolPopAwaiter(out Awaiter awaiter)
+        {
+            awaiter = null;
+
+            if (m_AwaiterPool.Pop(out var instance) == false)
+                return false;
+
+            awaiter = (Awaiter)instance;
+            awaiter.transform.SetParent(FOLDER_AWAITERS.transform);
+            awaiter.Initialized += OnAwaiterInitialized;
+            awaiter.Disposed += OnAwaiterDisposed;
+            awaiter.FuncReceived += OnAwaiterFuncReceived;
+            awaiter.FuncStarted += OnAwaiterBusy;
+            awaiter.FuncCompleted += OnAwaiterFuncComplete;
+            awaiter.Load();
+
+            return true;
+        }
+
+        private void PoolPushAwaiter(Awaiter awaiter)
+        {
+            awaiter.transform.SetParent(FOLDER_AWAITERS_POOL.transform);
+            awaiter.Initialized -= OnAwaiterInitialized;
+            awaiter.Disposed -= OnAwaiterDisposed;
+            awaiter.FuncReceived -= OnAwaiterFuncReceived;
+            awaiter.FuncStarted -= OnAwaiterBusy;
+            awaiter.FuncCompleted -= OnAwaiterFuncComplete;
+            awaiter.Unload();
+
+            m_AwaiterPool.Push(awaiter);
+        }
+
+        private void PoolUpdate()
+        {
+            var awaiterNumber = m_AwaiterPool.Count;
+
+            if (awaiterNumber < m_AwaiterPoolLimit)
+            {
+                for (int i = 0; i < m_AwaiterPoolLimit - awaiterNumber; i++)
+                    m_AwaiterPool.Push(Awaiter.Get(FOLDER_AWAITERS_POOL));
+            }
+        }
+
 
         private IEnumerator OperationAsync_1(int attamps = 5, int awaiting = 1)
         {
             var cache = Spawn("Cahce 1", FOLDER_SPAWNED);
             cache.Load();
-            
-            while(true)
+
+            while (true)
             {
-                if(cache.IsLoaded == true)
+                if (cache.IsLoaded == true)
                 {
                     Debug.Log("Operation: Success!");
                     break;
                 }
-                
+
                 Debug.Log("Waiting for Cahce 1 loading... Attemps: " + attamps);
                 yield return new WaitForSeconds(awaiting);
 
                 attamps--;
-                if(attamps == 0)
+                if (attamps == 0)
                 {
                     Debug.LogWarning("Operation: Failed!");
                     throw new Exception("Operation done by time delay!");
                 }
-            } 
+            }
 
             Debug.Log("Cahce 1 loaded");
         }
@@ -130,25 +157,25 @@ namespace APP.Console
         {
             var cache = Spawn("Cahce 2", FOLDER_SPAWNED);
             cache.Load();
-            
-            while(true)
+
+            while (true)
             {
-                if(cache.IsLoaded == true)
+                if (cache.IsLoaded == true)
                 {
                     Debug.Log("Operation: Success!");
                     break;
                 }
-                
+
                 Debug.Log("Waiting for Cahce 2 loading... Attemps: " + attamps);
                 yield return new WaitForSeconds(awaiting);
 
                 attamps--;
-                if(attamps == 0)
+                if (attamps == 0)
                 {
                     Debug.LogWarning("Operation: Failed!");
                     throw new Exception("Operation done by time delay!");
                 }
-            } 
+            }
 
             Debug.Log("Cahce 2 loaded");
         }
@@ -157,87 +184,88 @@ namespace APP.Console
         {
             var cache = Spawn("Cahce 3", FOLDER_SPAWNED);
             cache.Load();
-            
-            while(true)
+
+            while (true)
             {
-                if(cache.IsLoaded == true)
+                if (cache.IsLoaded == true)
                 {
                     Debug.Log("Operation: Success!");
                     break;
                 }
-                
+
                 Debug.Log("Waiting for Cahce 3 loading... Attemps: " + attamps);
                 yield return new WaitForSeconds(awaiting);
 
                 attamps--;
-                if(attamps == 0)
+                if (attamps == 0)
                 {
                     Debug.LogWarning("Operation: Failed!");
                     throw new Exception("Operation done by time delay!");
                 }
-            } 
+            }
 
             Debug.Log("Cahce 3 loaded");
         }
 
 
-
         private void OnAwaiterInitialized(Awaiter awaiter)
         {
-            if(m_Pool.Contains(awaiter))
-                m_Pool.Remove(awaiter);
-            
-            m_Awaiter.Add(awaiter);
+            m_AwaiterIsReady.Add(awaiter);
         }
 
         private void OnAwaiterDisposed(Awaiter awaiter)
         {
-            if(m_Awaiter.Contains(awaiter))
-                m_Awaiter.Remove(awaiter);
-            
-            m_Pool.Add(awaiter);
+            if (m_AwaiterIsReady.Contains(awaiter))
+                m_AwaiterIsReady.Remove(awaiter);
+
         }
 
+        private void OnAwaiterFuncReceived(Awaiter awaiter)
+        {
+            if (m_AwaiterIsReady.Contains(awaiter))
+                m_AwaiterIsReady.Remove(awaiter);
 
+        }
+
+        private void OnAwaiterBusy(Awaiter awaiter)
+        {
+
+        }
+
+        private void OnAwaiterFuncComplete(Awaiter awaiter)
+        {
+            m_AwaiterIsReady.Add(awaiter);
+        }
 
 
         private void OnEnable()
         {
 
-            foreach (var awaiter in m_Pool)
-            {
-                awaiter.Initialized += OnAwaiterInitialized;
 
-            }
 
         }
 
         private void OnDisable()
         {
-            foreach (var awaiter in m_Pool)
-            {
-                awaiter.Initialized -= OnAwaiterInitialized;
 
-            }
         }
 
         private void Undate()
         {
-            FuncAsyncExecute();
-        }
 
+        }
 
         private Cache Spawn(string name, GameObject parent)
         {
             var obj = new GameObject(name);
-            
-            if(parent == null)
+
+            if (parent == null)
                 parent = gameObject;
             obj.transform.SetParent(parent.transform);
-            
+
             obj.SetActive(false);
-            
-           return obj.AddComponent<Cache>();
+
+            return obj.AddComponent<Cache>();
         }
 
     }
@@ -254,28 +282,43 @@ namespace APP.Console
         public Awaiter Awaiter { get; private set; }
     }
 
-    public class Cache: MonoBehaviour
+    public class Cache : MonoBehaviour
     {
 
         [SerializeField] private bool m_IsLoaded;
-        
+        [SerializeField] private float m_LoadingTime;
+        [SerializeField] private string m_Label;
+
         public bool IsLoaded => m_IsLoaded;
 
-        
+        public void Setup(string label, int loadingTime)
+        {
+            m_LoadingTime = loadingTime;
+            m_Label = label;
+        }
+
         public void Load()
         {
             gameObject.SetActive(true);
         }
-        
-        public IEnumerator LoadAsync(Action result)
+
+        public IEnumerator LoadAsync(Action callback)
         {
-            yield return new WaitForSeconds(5);
+            while (m_LoadingTime > 0)
+            {
+                m_LoadingTime -= Time.deltaTime;
+                Debug.Log($"{m_Label}: waiting for operation complite...");
+                yield return new WaitForSeconds(0.01f);
+            }
+
+            
+            
             gameObject.SetActive(true);
             Debug.Log("Cache.LoadAsync() is done");
 
-            result.Invoke();
+            callback.Invoke();
         }
-        
+
         private void OnEnable()
         {
 
@@ -286,6 +329,7 @@ namespace APP.Console
         {
             m_IsLoaded = false;
         }
+
     }
 
 }
