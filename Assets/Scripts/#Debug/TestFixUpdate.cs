@@ -7,7 +7,7 @@ using UnityEngine;
 // Measure frame rate comparing FixedUpdate against Update.
 // Show the rates every second.
 
-namespace APP.Console
+namespace APP.Test
 {
 
     public class TestFixUpdate : MonoBehaviour

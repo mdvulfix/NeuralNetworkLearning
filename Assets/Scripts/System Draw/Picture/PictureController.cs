@@ -40,8 +40,9 @@ namespace APP
             
             var pictureConfig = new PictureConfig(m_Widht, m_Height, m_BackgroundColor, m_HoverColor);
             
+            //TODO: Picture controller init
             Picture = Picture.Get();
-            HandlerAsync.Start(() => AwaitSceneObjectLoadingAsync(Picture));
+            //HandlerAsync.Execute(() => AwaitSceneObjectLoadingAsync(Picture));
             
             
             Picture.Configure(pictureConfig);

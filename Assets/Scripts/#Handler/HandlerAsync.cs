@@ -5,53 +5,24 @@ namespace APP
 {
     public static class HandlerAsync
     {
-
-        private static Awaiter m_Awaiter = Awaiter.Get();
-        private static Func<IEnumerator> m_Func;
-        
-        public static void Start(Func<IEnumerator> func)
+        public static void Execute(IEnumerator operationAsync)
         {
             
-            m_Func = func;
-            using (var awaiter = Awaiter.Get())
+            
+            using (var controller = AsyncController.Get(new ConfigAsyncController()))
             {
-                
+                var awaiter = controller.GetAwaiter();
+                //controller.ExecuteAsync(awaiter, operationAsync((Action) => awaiter.Stop()));
 
-                //m_Awaiter.Disposed += OnAwaiterDisposed;
-                
-                m_Awaiter.StopCoroutine(nameof(m_Func));
-                m_Awaiter.StartCoroutine(nameof(m_Func));
-            
+
             }
-            
-        }
 
-        public static void Stop(Func<IEnumerator> func)
-        {
-            m_Awaiter.StopCoroutine(nameof(func));
-            
-        }
-        
-        public static void StopAll()
-        {
-            m_Awaiter.StopAllCoroutines();
-            
-        }
-    
-        private static void OnAwaiterInitialized()
-        {
 
-        }
-
-        private static void OnAwaiterDisposed()
-        {
-            //m_Awaiter.Disposed -= OnAwaiterDisposed;
-            //
-            //var obj = awaiter.GameObject;
-            //GameObject.Destroy(obj);
         }
     
     }
+
+  
 
 
 }
