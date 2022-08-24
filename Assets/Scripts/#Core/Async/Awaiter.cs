@@ -12,7 +12,7 @@ namespace APP
         [SerializeField] private bool m_IsActive;
         [SerializeField] private bool m_IsLoaded;
        
-        private AwaiterFuncAsync AwaiterFuncAsyncDelegate;
+        private Func<IEnumerator> Func;
 
         public bool IsReady => m_IsReady;
         public bool IsActive => m_IsActive;
@@ -90,21 +90,20 @@ namespace APP
         }
 
 
-        public void Run(FuncAsync func)
+        public void Run(Func<Action, IEnumerator> func)
         {
-            
-            AwaiterFuncAsyncDelegate = () => func(Callback);
-            
             var isReady = false;
             SetState(isReady);
+
+            Func = () => func(Callback);
             
-            StopCoroutine(AwaiterFuncAsyncDelegate());
+            StopCoroutine(Func());
 
             try
             {
                 FuncStarted?.Invoke(this); 
                 
-                StartCoroutine(AwaiterFuncAsyncDelegate());
+                StartCoroutine(Func());
                 Debug.Log("Async operation started...");  
                              
             }
@@ -119,8 +118,8 @@ namespace APP
 
         public void Stop()
         {
-            StopCoroutine(AwaiterFuncAsyncDelegate());
-            AwaiterFuncAsyncDelegate = null;
+            StopCoroutine(Func());
+            Func = null;
             
             var isReady = true;
             SetState(isReady);
@@ -171,6 +170,6 @@ namespace APP
     }
 
 
-    public delegate IEnumerator AwaiterFuncAsync();
+    public delegate IEnumerator FuncAsyncDelegate();
 }
 

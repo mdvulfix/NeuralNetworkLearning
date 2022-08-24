@@ -13,11 +13,13 @@ namespace APP.Test
 
         [SerializeField] private Transform FOLDER_SPAWNED;
 
+        //public static AsyncController AsyncController => m_Controller;
+
         private AsyncController m_Controller;
         
         private void Awake()
         {
-            m_Controller = new AsyncController(new ConfigAsyncController());
+            m_Controller = AsyncController.Get(new AsyncControllerConfig());
 
         }
 
@@ -34,14 +36,15 @@ namespace APP.Test
         private void Start()
         {
 
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < 2; i++)
             {
                 var label = "Cahce " + i;
                 var cache = Spawn(label, FOLDER_SPAWNED);
                 cache.Setup(label, Random.Range(1, 4));
 
-                m_Controller.ExecuteAsync(cache.LoadAsync);
-
+                
+                //HandlerAsync.ExecuteAsync(cache.LoadAsync);
+                //m_Controller.ExecuteAsync(cache.LoadAsync);
             }
         }
         
