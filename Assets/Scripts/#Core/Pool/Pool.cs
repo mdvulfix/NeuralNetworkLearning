@@ -1,21 +1,21 @@
 using System.Collections;
+using UnityEngine;
 
 namespace APP
 {
-
-    public class Pool : IConfigurable, IPool
+    public class Pool<TPoolable> : Pool, IPool
+    where TPoolable: IPoolable
     {
         private PoolConfig m_Config;
 
-        private Stack m_Poolables;
-
-        public int Count => m_Poolables.Count;
-
+        public Transform Parent {get; private set; }
+        
         public Pool() { }
         public Pool(params object[] args) =>
             Configure(args);
 
-        public virtual void Configure(params object[] args)
+    
+        public override void Configure(params object[] args)
         {
 
             if (args.Length > 0)
@@ -24,9 +24,39 @@ namespace APP
                 {
                     if (arg is PoolConfig)
                         m_Config = (PoolConfig) arg;
+                        Parent = m_Config.Parent;
                 }
             }
 
+            base.Configure(args);
+        }
+    
+    
+        public bool Push(TPoolable poolable) =>
+            Push(poolable);
+
+        public bool Pop(out TPoolable poolable) =>
+            Pop(out poolable);
+
+        public bool Peek(out TPoolable poolable) =>
+            Peek(out poolable);
+
+        public static Pool<TPoolable> Get(params object[] arg) =>
+            new Pool<TPoolable>(arg);
+    }
+    
+    
+    
+    
+    public abstract class Pool
+    {
+        private Stack m_Poolables;
+
+        public int Count => m_Poolables.Count;
+        
+
+        public virtual void Configure(params object[] args)
+        {
             m_Poolables = new Stack(100);
         }
 
@@ -68,18 +98,22 @@ namespace APP
         public IEnumerator GetEnumerator() =>
             m_Poolables.GetEnumerator();
 
-        public static Pool Get(params object[] arg) =>
-            new Pool(arg);
-
     }
 
     public struct PoolConfig : IConfig
     {
+        public Transform Parent { get; private set; }
 
+        public PoolConfig(Transform parent)
+        {
+            Parent = parent;
+        }
     }
 
-    public interface IPool: IEnumerable
+    public interface IPool: IConfigurable, IEnumerable
     {
+        Transform Parent {get; }
+        
         int Count {get; }
         
         bool Push(object poolable);
@@ -90,7 +124,7 @@ namespace APP
 
     public interface IPoolable
     {
-
+        Transform PoolParent {get; }
     }
 
     

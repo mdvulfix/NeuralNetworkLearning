@@ -24,7 +24,7 @@ namespace APP
             gameObject.SetActive(true);
         }
 
-        public IEnumerator LoadAsync(Action callback)
+        public IEnumerator LoadAsync(Action<bool> callback)
         {
             while (m_LoadingTime > 0)
             {
@@ -38,7 +38,7 @@ namespace APP
             gameObject.SetActive(true);
             Debug.Log($"{m_Label} async loading is done");
 
-            callback.Invoke();
+            callback.Invoke(true);
         }
 
         private void OnEnable()
