@@ -3,40 +3,43 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+using APP.Factory;
 
-namespace APP
+namespace APP.Pool
 {
-    public class PoolController<TPoolable> : Controller<PoolController<TPoolable>>, IController, IUpdateble
-    where TPoolable : class, IPoolable, IConfigurable
+    public class PoolController<TPoolable>: AController<PoolController<TPoolable>, PoolControllerConfig>, IController, IUpdateble
+    where TPoolable: IPoolable
     {
-        private PoolControllerConfig m_Config;
-
         private static Pool<TPoolable> m_Pool;
         private int m_AwaiterPoolLimit = 1;
 
         public PoolController() { }
-        public PoolController(params object[] args) =>
+        public PoolController(PoolControllerConfig config, params object[] args)
+        {
+            Setup(config);
             Configure(args);
+            Init();
+        }
 
+        public override void Setup(PoolControllerConfig config)
+        {
+            Config = config;
 
+            
+            
+            
+
+        }
+        
         public override void Configure(params object[] args)
         {
-            if (args.Length > 0)
-            {
-                foreach (var arg in args)
-                {
-                    if (arg is PoolControllerConfig)
-                    {
-                        m_Config = (PoolControllerConfig)arg;
-                    }
-                }
-            }
+        
+            var poolFactory = AFactory.Get<Factory<Pool<TPoolable, PoolConfig>>>();
+            var poolConfig = new PoolConfig();
 
-
+            
             if (m_Pool == null)
-                m_Pool = Pool<TPoolable>.Get(new PoolConfig());
-
-
+                m_Pool = Pool<TPoolable>.Get(poolFactory, poolConfig);
 
             base.Configure(m_Config);
         }
@@ -104,10 +107,9 @@ namespace APP
         }
 
 
-
     }
 
-    public class PoolControllerConfig
+    public struct PoolControllerConfig: IConfig
     {
 
 

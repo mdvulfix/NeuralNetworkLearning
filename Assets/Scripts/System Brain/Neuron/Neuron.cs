@@ -5,10 +5,8 @@ using UnityEngine;
 namespace APP.Brain
 {
     [Serializable]
-    public class Neuron : MonoBehaviour, IConfigurable
+    public class Neuron : MonoBehaviour, IConfigurable<NeuronConfig>
     {
-        private NeuronConfig m_Config;
-        
         private bool m_IsGrowing = false;
         private bool m_IsMoving = false;
 
@@ -48,16 +46,30 @@ namespace APP.Brain
         private Color m_ColorDefault = Color.white;
         private Color m_ColorHover = Color.green;
         
+        public NeuronConfig Config {get; private set; }
 
         public float Size { get => m_Size; private set => m_Size = value; }
         public float Energy  { get => m_Energy; private set => m_Energy = value; }
         public Vector3 Position { get => m_Transform.position; private set => m_Transform.position = value; }
 
+
         public event Action<Neuron> Divided;
         public event Action<Neuron> Dead;
 
+
+        
+        public virtual void Setup(NeuronConfig config)
+        {
+            Config = config;
+            Size = config.Size;
+            Energy = config.Energy;
+            Position = config.Position;
+        
+        }
+        
         public virtual void Configure(params object[] args)
         {
+       
             m_GameObject = gameObject;
 
             if (m_GameObject.TryGetComponent<Transform>(out m_Transform) == false)
@@ -78,26 +90,6 @@ namespace APP.Brain
 
             if (m_GameObject.TryGetComponent<Rigidbody>(out m_Rigidbody) == false)
                 m_Rigidbody = m_GameObject.AddComponent<Rigidbody>();
-
-            Size = m_SizeDefault;
-            Energy = m_EnergyDefault;
-            Position = Vector3.zero;
-
-            if(args.Length > 0)
-            {
-                foreach (var arg in args)
-                {
-                    if(arg is NeuronConfig)
-                    {
-                        m_Config = (NeuronConfig)arg;
-                        
-                        Size = m_Config.Size;
-                        Energy = m_Config.Energy;
-                        Position = m_Config.Position;
-
-                    }
-                }
-            }
 
             var neuronPosition = transform.position;
 
@@ -202,9 +194,6 @@ namespace APP.Brain
 
 
 
-        
-
-
         private void Awake() =>
             Configure();
 
@@ -229,10 +218,9 @@ namespace APP.Brain
             var obj = new GameObject("Neuron");
             return obj.AddComponent<Neuron>();
         }
-
     }
 
-    public class NeuronConfig
+    public struct NeuronConfig: IConfig
     {
         public NeuronConfig(float size, float energy, Vector3 position)
         {

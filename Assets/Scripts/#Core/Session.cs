@@ -7,11 +7,16 @@ namespace APP
     
     public class Session : MonoBehaviour, IConfigurable
     {
+        
+        
+        
         [SerializeField] private GameObject m_Brain;
 
 
         public static SceneRootData m_SceneRootData;
+        private SessionConfig m_Config;
 
+        public IConfig Config => m_Config;
 
         public virtual void Configure(params object[] args)
         {
@@ -54,6 +59,11 @@ namespace APP
         
         public static SceneRootData GetSceneRootData() =>
             m_SceneRootData;
+
+    }
+
+    public struct SessionConfig: IConfig
+    {
 
     }
 

@@ -3,114 +3,44 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+using APP.Factory;
+
 namespace APP
 {
-    public partial class Pool<TPoolable> : Pool, IPool
-    where TPoolable : class, IPoolable, new()
+    public class Pool<TPoolable> : Pool, IPool
+    where TPoolable : IPoolable
     {
-        
         public Pool() { }
-        public Pool(params object[] args) =>
-            Configure(args);
-
-
-
-        public override void Configure(params object[] args)
+        public Pool(PoolConfig config, params object[] args)
         {
-            //var config = (PoolConfig)args[PoolConfig.Index];
-
-            var config = new PoolConfig();
-            var arg = new List<ConfigArgInfo>();
-            arg[PoolConfig.Index].Instance = config;
-
-
-            arg.Index = PoolConfig.Index;
-            arg.Instance = config;
-            arg.Type = config.GetType();
-
-
-            base.Configure(arg.Index);
-
-
-
-            if (args.Length > 0)
-            {
-                foreach (var arg in args)
-                {
-                    if (arg is PoolConfig)
-                        var config = (PoolConfig)arg;
-                    Parent = m_Config.Parent;
-                }
-            }
-
-            base.Configure(args);
+            Setup(config);
+            Configure(args);
+            Init();
         }
 
-        /*
         public bool Push(TPoolable poolable) =>
-            Push(poolable);
+            Push<TPoolable>(poolable);
 
         public bool Pop(out TPoolable poolable) =>
-            Pop(out poolable);
+            Pop<TPoolable>(out poolable);
 
         public bool Peek(out TPoolable poolable) =>
-            Peek(out poolable);
+            Peek<TPoolable>(out poolable);
 
-        */
-
-        public static Pool<TPoolable> Get(params object[] arg) =>
-            new Pool<TPoolable>(arg);
-
-
-
-
-
-
-        public bool Push(TPoolable poolable)
-        {
-            m_Poolables.Push(poolable);
-            return true;
-        }
-
-        public bool Pop(out TPoolable poolable)
-        {
-            poolable = null;
-
-            if (m_Poolables.Count > 0)
-            {
-                poolable = m_Poolables.Pop();
-                return true;
-            }
-
-            return false;
-        }
-
-        public bool Peek(out TPoolable poolable)
-        {
-            poolable = null;
-
-            if (m_Poolables.Count > 0)
-            {
-                poolable = m_Poolables.Peek();
-                return true;
-            }
-
-            return false;
-        }
-
-
+    
+        public static Pool<TPoolable> Get(IFactory<Pool<TPoolable>, PoolConfig> factory,
+                                          PoolConfig config,
+                                          params object[] arg)
+        => factory.Get(config, arg);
+    
     }
 
 
 
 
-    public abstract class Pool
+    public abstract class Pool : IPool
     {
-        private PoolConfig m_Config;
-
-
         private Stack m_Poolables;
-        private IFactory m_Factory;
         private Transform m_Parent;
 
         private int m_Limit;
@@ -118,34 +48,37 @@ namespace APP
 
         public int Count => m_Poolables.Count;
 
-        public IConfig Config => m_Config;
+        public PoolConfig? Config { get; private set; }
+
+        private GetPoolableDel GetPoolableDel;
+        
+        public virtual void Setup(PoolConfig config)
+        {
+            Config = config;
+            m_Parent = config.Parent;
+            m_Limit = config.Limit;
+            
+            GetPoolableDel = config.GetPoolableDel;
+        }
 
         public virtual void Configure(params object[] args)
         {
-            if (args.Length > 0)
-            {
-                foreach (var arg in args)
-                {
-                    if (arg is PoolConfig)
-                        m_Config = (PoolConfig)arg;
-                    m_Parent = m_Config.Parent;
-                    m_Limit = m_Config.Limit;
-                    m_Factory = m_Config.Factory;
-                }
-            }
-
-
+            string log = Config == null ? 
+            ("The configuration must be configured! Setup failed!").Send(LogFormat.Warning) : 
+            ("Start configuration... ").Send();
+            
 
             m_Poolables = new Stack(100);
-        }
 
+        }
+        
         public virtual void Init() { }
         public virtual void Dispose() { }
 
 
 
         public bool Push<TPoolable>(TPoolable poolable)
-        where TPoolable : class, IPoolable, new()
+        where TPoolable : IPoolable
         => Push(poolable);
 
         public bool Push(IPoolable poolable)
@@ -156,7 +89,7 @@ namespace APP
 
 
         public bool Pop<TPoolable>(out TPoolable poolable)
-        where TPoolable : class, IPoolable, new()
+        where TPoolable : IPoolable
         => Pop(out poolable);
 
         public bool Pop(out IPoolable poolable)
@@ -173,8 +106,8 @@ namespace APP
         }
 
 
-        public bool Peek<TPoolable>(out IPoolable poolable)
-        where TPoolable : class, IPoolable, new()
+        public bool Peek<TPoolable>(out TPoolable poolable)
+        where TPoolable : IPoolable
         => Peek(out poolable);
 
         public bool Peek(out IPoolable poolable)
@@ -199,45 +132,20 @@ namespace APP
                 {
                     var upToLimit = m_Limit - Count;
                     for (int i = 0; i < upToLimit; i++)
-                        Create(m_Factory);
+                        GetPoolable();
                 }
 
                 if (m_Limit == 0 && Count == 0)
-                    Create(m_Factory); ;
+                    GetPoolable();
             }
         }
 
 
-        public void Create(IFactory factory)
-        => Push((IPoolable)factory.Get());
-
+        public IPoolable GetPoolable() 
+        => GetPoolableDel();
+        
         public IEnumerator GetEnumerator()
         => m_Poolables.GetEnumerator();
-
-    }
-
-
-    public struct PoolConfig : IConfig
-    {
-        public static int Index => PoolArgsIndex.Config.ToInt();
-
-        public PoolConfig(int limit, Transform parent, IFactory factory)
-        {
-            Limit = limit;
-            Parent = parent;
-            Factory = factory;
-
-        }
-
-        public int Limit { get; private set; }
-        public Transform Parent { get; private set; }
-        public IFactory Factory { get; private set; }
-
-    }
-
-    public enum PoolArgsIndex
-    {
-        Config
     }
 
 
@@ -250,8 +158,8 @@ namespace APP
         bool Peek(out IPoolable poolable);
 
         void CheckLimit();
-        void Create(IFactory factory);
-
+        
+        IPoolable GetPoolable();
     }
 
     public interface IPoolable : IConfigurable
@@ -259,6 +167,29 @@ namespace APP
         Transform PoolParent { get; }
     }
 
+    
+    
+    
+    public struct PoolConfig : IConfig
+    {
+        public PoolConfig(int limit, Transform parent, IFactory factory, GetPoolableDel getPoolable)
+        {
+            Limit = limit;
+            Parent = parent;
+            Factory = factory;
+            GetPoolableDel = getPoolable;
+        }
 
+        public int Limit { get; private set; }
+        public Transform Parent { get; private set; }
+        public IFactory Factory { get; private set; }
+        public GetPoolableDel GetPoolableDel{ get; private set; }
+    }
+
+    public delegate IPoolable DelegateGetPoolable (IFactory<IPoolable, IConfig> factory,
+                                                   IConfig config,
+                                                   params object[] args);
+
+    public delegate IPoolable GetPoolableDel ();
 
 }

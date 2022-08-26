@@ -5,10 +5,8 @@ using UnityEngine;
 
 namespace APP.Brain
 {
-    public class Brain : MonoBehaviour, IConfigurable
+    public class Brain : MonoBehaviour, IConfigurable<BrainConfig>
     {
-        private BrainConfig m_Config;
-
         private IRecognizable m_Recognizable;
         private IEnumerable<ISensible> m_Sensibles;
         
@@ -23,25 +21,22 @@ namespace APP.Brain
         
         private Vector3Int m_MatrixSize;
         private int m_MatrixDimension = 8;
-        
 
+        public BrainConfig Config {get; private set; }
+
+        
+        public virtual void Setup(BrainConfig config)
+        {
+            Config = config;
+            
+            m_Recognizable = Config.Recognizable;
+            m_Sensibles = m_Recognizable.GetSensibles();
+        }
+        
+        
         public virtual void Configure(params object[] args)
         {
-            if(args.Length > 0)
-            {
-                foreach (var arg in args)
-                {
-                    if(arg is BrainConfig)
-                    {
-                        m_Config = (BrainConfig)arg;
-                        
-                        m_Recognizable = m_Config.Recognizable;
-                        m_Sensibles = m_Recognizable.GetSensibles();
-
-
-                    }
-                }
-            }
+            
             
             
             
@@ -134,7 +129,7 @@ namespace APP.Brain
 
     }
 
-    public class BrainConfig
+    public struct BrainConfig: IConfig
     {
         public BrainConfig(IRecognizable recognizable)
         {

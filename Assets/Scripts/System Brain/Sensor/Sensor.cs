@@ -8,6 +8,8 @@ namespace APP.Brain
     public class Sensor : MonoBehaviour, IConfigurable
     {
 
+        private SensorConfig m_Config;
+        
         [SerializeField] private float m_ExciteRate;
         
         //Fixed frame rate = 0.02;
@@ -20,6 +22,9 @@ namespace APP.Brain
         private GameObject m_GameObject;
         private Transform m_Transform;
         private MeshRenderer m_Renderer;
+        
+
+        public IConfig Config => m_Config;
 
         public event Action<Сharge> Excited;
 
@@ -36,6 +41,22 @@ namespace APP.Brain
                 m_Renderer = m_GameObject.AddComponent<MeshRenderer>();
                 //m_Renderer.sprite = HandlerSprite.Circle;
             }
+
+            if(args.Length > 0)
+            {
+                foreach (var arg in args)
+                {
+                    if(arg is SensorConfig)
+                    {
+                        m_Config = (SensorConfig)arg;
+                        
+
+                    }
+                }
+            }
+
+
+
              
         }
 
@@ -86,5 +107,10 @@ namespace APP.Brain
             return obj.AddComponent<Sensor>();
         }
     
+    }
+
+    public struct SensorConfig: IConfig
+    {
+        
     }
 }

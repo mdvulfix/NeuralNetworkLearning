@@ -7,7 +7,8 @@ namespace APP
 
     public class Awaiter : MonoBehaviour, IConfigurable, IPoolable
     {
-
+        private AwaiterConfig m_Config;
+        
         private static Transform ROOT_AWAITERS;
         private static Transform ROOT_AWAITERS_POOL;
         
@@ -16,13 +17,15 @@ namespace APP
 
 
         private Func<IEnumerator> Func;
+        
 
         public bool IsReady => m_IsReady;
         public bool IsActive => m_IsActive;
 
         public Transform PoolParent => ROOT_AWAITERS_POOL;
 
-        
+        public IConfig Config => m_Config;
+
         public event Action<Awaiter> Initialized;
         public event Action<Awaiter> Disposed;
 
@@ -34,7 +37,20 @@ namespace APP
 
         public virtual void Configure(params object[] args)
         {
-            
+            if(args.Length > 0)
+            {
+                foreach (var arg in args)
+                {
+                    if(arg is AwaiterConfig)
+                    {
+                        m_Config = (AwaiterConfig)arg;
+                        
+
+                    }
+                }
+            }
+
+
             if (ROOT_AWAITERS == null)
                 ROOT_AWAITERS = new GameObject("Awaiters").transform;
 
@@ -188,46 +204,14 @@ namespace APP
 
     }
 
-
-    public class FactoryAwaiter : Factory<Awaiter>, IFactory
+    public struct AwaiterConfig: IConfig
     {
 
-        public override Awaiter Get(params object[] args) =>
-            Awaiter.Get((string)args[(int)Param.Name]);
 
-
-        private enum Param
-        {
-            Name
-        }
     }
 
 
-    public abstract class Factory<T>: Factory
-    where T: IConfigurable, new()
-    {
-        public virtual T Get(params object[] args) =>
-            Get<T>(args);
-    
-
-    }
-    
-    
-    public abstract class Factory: IFactory
-    {
-        public T Get<T>(params object[] args) where T: IConfigurable, new()
-        {
-            var instance = new T();
-            instance.Configure(args);
-
-            return instance;
-        }
-   
-    }
-    
-    public interface IFactory
-    {
-        IConfigurable Get(params object[] args);
-    }
 }
+
+
 

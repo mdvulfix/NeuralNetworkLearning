@@ -8,6 +8,9 @@ namespace APP.Brain
     public abstract class Nerve<T> where T : IConfigurable, new()
     {
         
+        public IConfig Config {get; private set; }
+        
+        
         [SerializeField] private Vector3 m_Head;
         [SerializeField] private Vector3 m_Tail;
         [SerializeField] private float m_Width;
@@ -20,6 +23,23 @@ namespace APP.Brain
 
         public virtual void Configure(params object[] args)
         {
+            
+            if (args.Length > 0)
+            {
+                foreach (var arg in args)
+                {
+                    if (arg is IConfig)
+                    {
+                        Config = (IConfig)arg;
+                    }
+                }
+            }
+            
+            
+            
+            
+            
+            
             m_Head = (Vector3) args[0];
             m_Tail = (Vector3) args[1];
             m_Width = (float) args[2];
