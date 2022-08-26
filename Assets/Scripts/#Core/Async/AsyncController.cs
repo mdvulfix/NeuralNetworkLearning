@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using Random = UnityEngine.Random;
 
 namespace APP
 {
@@ -11,14 +10,15 @@ namespace APP
     {
         private AsyncControllerConfig m_Config;
 
-
         private static List<Awaiter> m_AwaiterIsReady;
         private int m_AwaiterIsReadyLimit = 5;
 
         private static List<FuncAsyncInfo> m_FuncExecuteQueue;
         private Awaiter m_FuncQueueAwaiter;
-        
-        
+
+        private PoolController<Awaiter> m_PoolController;
+
+
         public event Action<FuncAsyncInfo> FuncAsyncExecuted;
 
         public AsyncController() { }
@@ -49,19 +49,28 @@ namespace APP
 
 
             m_FuncQueueAwaiter = Awaiter.Get("FuncQueueAwaiter");
-            
+
+            m_PoolController = new PoolController<Awaiter>();
+
             base.Configure(m_Config);
         }
 
         public override void Init()
         {
             m_FuncQueueAwaiter.Init();
-            
+
+            m_PoolController.Configure(new PoolControllerConfig());
+            m_PoolController.Init();
+
+
+
             base.Init();
         }
 
         public override void Dispose()
         {
+            m_PoolController.Dispose();
+            
             m_FuncQueueAwaiter.Dispose();          
             
             base.Dispose();
@@ -70,6 +79,8 @@ namespace APP
         public void Update()
         {
             FuncQueueUpdate();
+
+            m_PoolController.Update();
         }
 
 
@@ -115,8 +126,11 @@ namespace APP
             return false;
         }
 
-        private bool PoolPopAwaiter(out Awaiter awaiter)
+        private bool PopAwaiter(out Awaiter awaiter)
         {
+            
+            m_PoolController
+            
             awaiter = null;
 
             if (m_AwaiterPool.Pop(out var instance) == false)

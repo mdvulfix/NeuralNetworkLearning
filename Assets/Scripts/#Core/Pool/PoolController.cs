@@ -7,14 +7,12 @@ using UnityEngine;
 namespace APP
 {
     public class PoolController<TPoolable> : Controller<PoolController<TPoolable>>, IController, IUpdateble
-    where TPoolable: class, IPoolable, IConfigurable
+    where TPoolable : class, IPoolable, IConfigurable
     {
         private PoolControllerConfig m_Config;
 
         private static Pool<TPoolable> m_Pool;
         private int m_AwaiterPoolLimit = 1;
-
-
 
         public PoolController() { }
         public PoolController(params object[] args) =>
@@ -56,47 +54,43 @@ namespace APP
             base.Dispose();
         }
 
-
-        private void PoolCheckLimit()
+        
+        public void Update()
         {
-            if (m_AwaiterPoolLimit > 0 && m_Pool.Count < m_AwaiterPoolLimit)
-            {
-                var upToLimit = m_AwaiterPoolLimit - m_Pool.Count;
-                for (int i = 0; i < upToLimit; i++)
-                    Set();
-
-                return;
-            }
-
-            if (m_Pool.Count == 0)
-                Set();
-
+            PoolUpdate();
         }
 
-        private bool Pop(out TPoolable poolable)
-        {
-            if (m_Pool.Pop(out poolable))
-            {
-                poolable.Init();
-                return true;
-            }
-            
-            return false;
-        }
 
-        private void Push(TPoolable poolable)
+        public void Push(TPoolable poolable)
         {
             poolable.Dispose();
 
             m_Pool.Push(poolable);
         }
 
-        private void Set()
+        public bool Pop(out TPoolable poolable)
         {
-            
-            
-            m_Pool.Push(TPoolable.Get());
+            if (m_Pool.Pop(out poolable))
+            {
+                poolable.Init();
+                return true;
+            }
+
+            return false;
         }
+
+        public bool Peek(out TPoolable poolable)
+        {
+            if (m_Pool.Peek(out poolable))
+            {
+                poolable.Init();
+                return true;
+            }
+
+            return false;
+        }
+
+
 
 
 
@@ -106,13 +100,11 @@ namespace APP
 
         private void PoolUpdate()
         {
-
+            PoolCheckLimit();
         }
 
-        public void Update()
-        {
-            PoolUpdate();
-        }
+
+
     }
 
     public class PoolControllerConfig

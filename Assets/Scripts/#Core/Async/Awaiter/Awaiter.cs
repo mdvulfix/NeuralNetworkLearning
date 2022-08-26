@@ -20,8 +20,9 @@ namespace APP
         public bool IsReady => m_IsReady;
         public bool IsActive => m_IsActive;
 
+        public Transform PoolParent => ROOT_AWAITERS_POOL;
 
-
+        
         public event Action<Awaiter> Initialized;
         public event Action<Awaiter> Disposed;
 
@@ -226,7 +227,7 @@ namespace APP
     
     public interface IFactory
     {
-        T Get<T>(params object[] args) where T: IConfigurable, new();
+        IConfigurable Get(params object[] args);
     }
 }
 
