@@ -7,11 +7,11 @@ using APP.Factory;
 
 namespace APP.Pool
 {
-    public class PoolController<TPoolable>: AController<PoolController<TPoolable>, PoolControllerConfig>, IController, IUpdateble
-    where TPoolable: IPoolable
+    public class PoolController<TPoolable> :AController<PoolController<TPoolable>, PoolControllerConfig>, IController, IUpdateble
+    where TPoolable : IPoolable
     {
         private static Pool<TPoolable> m_Pool;
-        private int m_AwaiterPoolLimit = 1;
+        private IFactory<IPoolable> m_PoolableFactory;
 
         public PoolController() { }
         public PoolController(PoolControllerConfig config, params object[] args)
@@ -24,30 +24,26 @@ namespace APP.Pool
         public override void Setup(PoolControllerConfig config)
         {
             Config = config;
-
-            
-            
-            
-
+            m_PoolableFactory = config.PoolableFactory;
         }
-        
+
         public override void Configure(params object[] args)
         {
-        
-            var poolFactory = AFactory.Get<Factory<Pool<TPoolable, PoolConfig>>>();
-            var poolConfig = new PoolConfig();
 
-            
-            if (m_Pool == null)
-                m_Pool = Pool<TPoolable>.Get(poolFactory, poolConfig);
 
-            base.Configure(m_Config);
+            base.Configure();
         }
 
         public override void Init()
         {
-            PoolUpdate();
+            
+            var limit = 5;
+            var poolFactory = AFactory.Get<Factory<Pool<TPoolable>, PoolConfig>>();
+            var poolConfig = new PoolConfig(limit, () => m_PoolableFactory.Get());
 
+            if (m_Pool == null)
+                m_Pool = Pool<TPoolable>.Get(poolFactory, poolConfig);
+            
             base.Init();
         }
 
@@ -57,10 +53,9 @@ namespace APP.Pool
             base.Dispose();
         }
 
-        
         public void Update()
         {
-            PoolUpdate();
+            m_Pool.Update();
         }
 
 
@@ -93,25 +88,16 @@ namespace APP.Pool
             return false;
         }
 
+    }
 
-
-
-
-
-
-
-
-        private void PoolUpdate()
+    public struct PoolControllerConfig : IConfig
+    {
+        public PoolControllerConfig(IFactory<IPoolable> poolableFactory)
         {
-            PoolCheckLimit();
+            PoolableFactory = poolableFactory;
         }
 
-
-    }
-
-    public struct PoolControllerConfig: IConfig
-    {
-
-
+        public IFactory<IPoolable> PoolableFactory { get; }
     }
 }
+

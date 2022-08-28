@@ -1,28 +1,90 @@
 
+using UnityEngine;
+
 namespace APP.Factory
 {
-    public class Factory<T, TConfig>: AFactory, IFactory<T, TConfig>
-    where T: class, IConfigurable<TConfig>, new()
+    public class Factory<TConfigurable, TConfig>: AFactory, IFactory<TConfigurable, TConfig>
+    where TConfigurable: Component, IConfigurable<TConfig>, new()
     where TConfig: struct, IConfig
     {
-        public T Get(TConfig config, params object[] args) 
+        public TConfigurable Get(TConfig config, params object[] args) 
         {
-            var instance = new T();
-            instance.Setup(config);
-            instance.Configure(args);
+            if (typeof(TConfigurable) is IScenable)
+            { 
+                var name = (string) args[0];
+                var obj = new GameObject(name);
+                obj.SetActive(false);
+            
+                var configurable = obj.AddComponent<TConfigurable>();
+
+                if (configurable is IPoolable)
+                { 
+                    var rootPool = (Transform) args[1];
+                    obj.transform.SetParent(rootPool);
+                }
+                else
+                { 
+                    var root = (Transform) args[2];
+                    obj.transform.SetParent(root);
+                }
+                
+
+                obj.transform.position = Vector3.zero;
+                obj.name += configurable.GetHashCode();
+                return configurable;
+            
+            }
+
+            var instance = new TConfigurable();
+            instance.Configure(config, args);
+            instance.Init();
 
             return instance;
         }
     }
 
-    public class Factory<T>: AFactory, IFactory<T>
-    where T: class, IConfigurable, new()
+    public class Factory<TConfigurable>: AFactory, IFactory<TConfigurable>
+    where TConfigurable: class, IConfigurable, new()
     {
         
-        public T Get(params object[] args) 
+        public TConfigurable Get(params object[] args) 
         {
-            var instance = new T();
+            
+            if (typeof(TConfigurable) is IScenable)
+            { 
+                var name = (string) args[0];
+                var obj = new GameObject(name);
+                obj.SetActive(false);
+            
+                var configurable = obj.AddComponent<TConfigurable>();
+
+                if (configurable is IPoolable)
+                { 
+                    var rootPool = (Transform) args[1];
+                    obj.transform.SetParent(rootPool);
+                }
+                else
+                { 
+                    var root = (Transform) args[2];
+                    obj.transform.SetParent(root);
+                }
+                
+
+                obj.transform.position = Vector3.zero;
+                obj.name += configurable.GetHashCode();
+                return configurable;
+            
+            }
+            
+            
+            
+            
+            
+            
+            
+            var instance = new TConfigurable();
             instance.Configure(args);
+            instance.Init();
 
             return instance;
         }

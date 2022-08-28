@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -5,32 +6,21 @@ using UnityEngine;
 namespace APP
 {
     
-    public class Session : MonoBehaviour, IConfigurable
+    public class Session : AScenable, IConfigurable
     {
         
-        
-        
         [SerializeField] private GameObject m_Brain;
-
-
+        
         public static SceneRootData m_SceneRootData;
-        private SessionConfig m_Config;
 
-        public IConfig Config => m_Config;
+        public event Action Initialized;
+        public event Action Disposed;
 
-        public virtual void Configure(params object[] args)
+
+        public override void Configure(params object[] args)
         {
             m_SceneRootData = new SceneRootData(m_Brain);
         }
-
-        public virtual void Init() { }
-        public virtual void Dispose() { }
-
-
-
-
-
-
 
 
 
@@ -62,9 +52,9 @@ namespace APP
 
     }
 
-    public struct SessionConfig: IConfig
+    public struct SessionConfig : IConfig
     {
-
+        public void Setup(IConfigurable configurable) { }
     }
 
     public struct SceneRootData

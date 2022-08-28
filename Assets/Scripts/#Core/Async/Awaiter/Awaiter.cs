@@ -4,119 +4,53 @@ using UnityEngine;
 
 namespace APP
 {
-
-    public class Awaiter : MonoBehaviour, IConfigurable, IPoolable
+    public interface IAwaiter
     {
-        private AwaiterConfig m_Config;
-        
-        private static Transform ROOT_AWAITERS;
-        private static Transform ROOT_AWAITERS_POOL;
-        
+        bool IsReady { get; }
+
+        event Action<Awaiter> FuncStarted;
+        event Action<Awaiter> FuncCompleted;
+        event Action<Awaiter, bool> StateChanged;
+
+        void Run(Func<Action<bool>, IEnumerator> func);
+        void Stop();
+    }
+
+    public class Awaiter : AConfigurable, IAwaiter, IPoolable 
+    {
+
+        private static Transform ROOT;
+        private static Transform ROOT_POOL;
+
+
         [SerializeField] private bool m_IsReady;
-        [SerializeField] private bool m_IsActive;
 
 
         private Func<IEnumerator> Func;
-        
 
         public bool IsReady => m_IsReady;
-        public bool IsActive => m_IsActive;
-
-        public Transform PoolParent => ROOT_AWAITERS_POOL;
-
-        public IConfig Config => m_Config;
-
-        public event Action<Awaiter> Initialized;
-        public event Action<Awaiter> Disposed;
 
         public event Action<Awaiter> FuncStarted;
         public event Action<Awaiter> FuncCompleted;
 
         public event Action<Awaiter, bool> StateChanged;
 
-
-        public virtual void Configure(params object[] args)
+        public Awaiter() { }
+        public Awaiter(params object[] args)
         {
-            if(args.Length > 0)
-            {
-                foreach (var arg in args)
-                {
-                    if(arg is AwaiterConfig)
-                    {
-                        m_Config = (AwaiterConfig)arg;
-                        
-
-                    }
-                }
-            }
-
-
-            if (ROOT_AWAITERS == null)
-                ROOT_AWAITERS = new GameObject("Awaiters").transform;
-
-            if (ROOT_AWAITERS_POOL == null)
-            {
-                ROOT_AWAITERS_POOL = new GameObject("Pool").transform;
-                ROOT_AWAITERS_POOL.transform.SetParent(ROOT_AWAITERS);
-            }
-            
-            Func = null;
+            Configure(args);
+            Init();
         }
 
-        public virtual void Init()
+        public override void Configure(params object[] args)
         {
-            Activate((stateChangeCallback) =>
-                { SetState(stateChangeCallback); });
+            if (ROOT == null)
+                ROOT = SceneRoot.AWAITER;
 
-            Initialized?.Invoke(this);
-        }
+            if (ROOT_POOL == null)
+                ROOT_POOL = SceneRoot.AWAITER_POOL;
 
-        public virtual void Dispose()
-        {
-            Deactivate((stateChangeCallback) =>
-                { SetState(stateChangeCallback); });
-
-            Disposed?.Invoke(this);
-        }
-
-
-        public void Activate(Action<bool> stateChangeCallback)
-        {
-            var isReady = true;
-            var isActive = true;
-
-            SetActive(isActive);
-            stateChangeCallback.Invoke(isReady);
-        }
-        
-        public IEnumerator ActivateAsync(Action<bool> stateChangeCallback)
-        {
-            var isReady = true;
-            var isActive = true;
-
-            SetActive(isActive);
-            stateChangeCallback.Invoke(isReady);
-            yield return null;
-        }
-
-
-        public void Deactivate(Action<bool> stateChangeCallback)
-        {
-            var isReady = false;
-            var isActive = false;
-
-            SetActive(isActive);
-            stateChangeCallback.Invoke(isReady);
-        }
-        
-        public IEnumerator DeactivateAsync(Action<bool> stateChangeCallback)
-        {
-            var isReady = false;
-            var isActive = false;
-
-            SetActive(isActive);
-            stateChangeCallback.Invoke(isReady);
-            yield return null;
+            base.Configure();
         }
 
 
@@ -144,8 +78,6 @@ namespace APP
             }
         }
 
-
-
         public void Stop()
         {
             StopCoroutine(Func());
@@ -159,7 +91,7 @@ namespace APP
         }
 
 
-        public void Callback(bool isReady)
+        private void Callback(bool isReady)
         {
             SetState(isReady);
         }
@@ -172,46 +104,41 @@ namespace APP
         }
 
 
-        private void SetActive(bool isActive)
-        {
-            var root = isActive == true ? ROOT_AWAITERS : ROOT_AWAITERS_POOL;
-            
-            transform.SetParent(root);
-            transform.position = Vector3.zero;
-            
-            gameObject.SetActive(isActive);
-            m_IsActive = isActive;
-
-            Debug.Log($"Awaiter {this.GetHashCode()} activation: {isActive}");
-        }
-
-
-
+        
+        
         // FACTORY //
-        public static Awaiter Get(string name = "Awaiter")
-        {
-            var obj = new GameObject(name);
-            
-            obj.SetActive(false);
-            obj.transform.SetParent(ROOT_AWAITERS_POOL);
-            obj.transform.position = Vector3.zero;
-            
-            var awaiter = obj.AddComponent<Awaiter>();
-            obj.name += awaiter.GetHashCode();
-
-            return awaiter;
-        }
-
+        public static TAwaiter Get<TAwaiter>(IFactory<TAwaiter> factory, params object[] arg)
+        where TAwaiter: class, IAwaiter, new()
+            => factory.Get(arg, "Awaiter", ROOT_POOL, ROOT);
     }
 
-    public struct AwaiterConfig: IConfig
+    public struct AwaiterConfig : IConfig
     {
-
+        public void Setup(IConfigurable configurable) { }
 
     }
 
 
 }
 
+namespace APP
+{
+    public partial class SceneRoot
+    {
+        public static Transform AWAITER;
+        public static Transform AWAITER_POOL;
 
+        public SceneRoot()
+        {
+            if (AWAITER == null)
+                AWAITER = new GameObject("Awaiters").transform;
+
+            if (AWAITER_POOL == null)
+            {
+                AWAITER_POOL = new GameObject("Pool").transform;
+                AWAITER_POOL.transform.SetParent(AWAITER);
+            }
+        }
+    }
+}
 
