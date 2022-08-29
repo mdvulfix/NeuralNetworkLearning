@@ -3,57 +3,48 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-using APP.Factory;
-
 namespace APP.Pool
 {
-    public class PoolController<TPoolable> :AController<PoolController<TPoolable>, PoolControllerConfig>, IController, IUpdateble
+
+
+    public class PoolController<TPoolable> : AController, IPoolController<TPoolable>
     where TPoolable : IPoolable
     {
-        private static Pool<TPoolable> m_Pool;
-        private IFactory<IPoolable> m_PoolableFactory;
+        private static IPool<TPoolable> m_Pool;
+
+        private IFactory<TPoolable> m_FactoryPoolable;
+        private IFactory<TPoolable, TPoolableConfig> m_FactoryPoolable;
 
         public PoolController() { }
         public PoolController(PoolControllerConfig config, params object[] args)
         {
-            Setup(config);
-            Configure(args);
+            Configure(config, args);
             Init();
         }
 
-        public override void Setup(PoolControllerConfig config)
+        public override void Configure(IConfig config, params object[] args)
         {
-            Config = config;
-            m_PoolableFactory = config.PoolableFactory;
-        }
+            var poolControllerConfig = (PoolControllerConfig)config;
 
-        public override void Configure(params object[] args)
-        {
-
+            m_FactoryPoolable = poolControllerConfig.PoolableFactory;
 
             base.Configure();
         }
 
         public override void Init()
         {
-            
             var limit = 5;
-            var poolFactory = AFactory.Get<Factory<Pool<TPoolable>, PoolConfig>>();
-            var poolConfig = new PoolConfig(limit, () => m_PoolableFactory.Get());
+            var poolConfig = new PoolConfig(limit, () => (TPoolable)m_FactoryPoolable.Get());
+            
 
             if (m_Pool == null)
-                m_Pool = Pool<TPoolable>.Get(poolFactory, poolConfig);
-            
+                m_Pool = Pool<TPoolable>.Get(poolConfig);
+
             base.Init();
         }
 
-        public override void Dispose()
-        {
 
-            base.Dispose();
-        }
-
-        public void Update()
+        public virtual void Update()
         {
             m_Pool.Update();
         }
@@ -88,16 +79,59 @@ namespace APP.Pool
             return false;
         }
 
+
+
+        // FACTORY //
+        public static IPoolController<TPoolable> Get(IFactory<IPoolController<TPoolable>, IConfig> factory, IConfig config, params object[] args)
+            => factory.Get(config, args);
+
+        public static IPoolController<TPoolable> Get(IConfig config, params object[] args)
+        {
+            var poolController = new PoolController<TPoolable>();
+            poolController.Configure(config, args);
+            poolController.Init();
+
+            return poolController;
+        }
     }
 
-    public struct PoolControllerConfig : IConfig
+    public struct PoolControllerConfig<IPoolable> : IConfig
     {
+        public IFactory<IPoolable> PoolableFactory {get; private set; }
+
+
         public PoolControllerConfig(IFactory<IPoolable> poolableFactory)
         {
             PoolableFactory = poolableFactory;
         }
-
-        public IFactory<IPoolable> PoolableFactory { get; }
     }
+
+    public struct PoolControllerConfig<TPoolable, TPoolableConfig>  : IConfig
+    {
+        public IFactory<TPoolable, TPoolableConfig> PoolableFactory {get; private set; }
+
+
+        public PoolControllerConfig(IFactory<TPoolable, TPoolableConfig> poolableFactory)
+        {
+            PoolableFactory = poolableFactory;
+        }
+    }
+
+
+
+    public interface IPoolController<TPoolable> : IController, IUpdateble
+    where TPoolable : IPoolable
+    {
+        bool Peek(out TPoolable poolable);
+        bool Pop(out TPoolable poolable);
+        void Push(TPoolable poolable);
+    }
+
+
+
+
+
+
+
 }
 

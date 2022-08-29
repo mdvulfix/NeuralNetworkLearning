@@ -1,17 +1,36 @@
 using System;
+using System.Collections;
 using UnityEngine;
+
 
 namespace APP
 {
-    public abstract class AConfigurable : IMessager
-    {
-        
-        public IConfig Config { get; protected set; }
 
+    public abstract class AConfigurableOnScene : MonoBehaviour, IMessager
+    {
+
+        private static Transform ROOT;
+        private static Transform ROOT_POOL;
+
+        
         [SerializeField] private bool m_IsDebug = true;
         
         [SerializeField] private bool m_IsConfigured;
         [SerializeField] private bool m_IsInitialized;
+        
+        
+        [SerializeField] private bool m_IsActive;
+
+
+        public IConfig Config { get; protected set; }
+        
+        public GameObject OnSceneGameObject => gameObject;
+        public Transform OnSceneTransform => gameObject.transform;
+
+        public bool IsConfigured => m_IsConfigured;
+        public bool IsInitialized => m_IsInitialized;
+        public bool IsActive => m_IsActive;
+
 
         public event Action Initialized;
         public event Action Disposed;
@@ -19,7 +38,6 @@ namespace APP
         public event Action<IMessage> Message;
 
 
-        
         // CONFIGURE //
         public virtual void Configure<TConfig>(TConfig config, params object[] args)
         where TConfig: struct, IConfig
@@ -27,13 +45,13 @@ namespace APP
             Config = config;
             Configure(args);
         }
-        
+
         public virtual void Configure(IConfig config, params object[] args)
         {
             Config = config;
             Configure(args);
         }
-        
+       
         public virtual void Configure(params object[] args)
         {
 
@@ -66,7 +84,7 @@ namespace APP
             
             Send("Initialization completed!");
         }
-           
+        
         public virtual void Dispose()
         { 
 
@@ -76,37 +94,74 @@ namespace APP
             Send("Dispose completed!");
         }
 
-        
-        
+        // LOAD & ACTIVATE //
+        public virtual void Activate()
+        {
+            transform.SetParent(ROOT);
+            transform.position = Vector3.zero;
+
+            m_IsActive = true;
+            gameObject.SetActive(m_IsActive);
+
+            ($"{this.GetName()} {this.GetHashCode()} active: {m_IsActive}").Send();
+
+        }
+
+        public IEnumerator ActivateAsync(Action<bool> callback)
+        {
+            Activate();
+            callback.Invoke(m_IsActive);
+            yield return null;
+        }
+
+        public virtual void Deactivate()
+        {
+            transform.SetParent(ROOT_POOL);
+            transform.position = Vector3.zero;
+
+            m_IsActive = false;
+            gameObject.SetActive(m_IsActive);
+
+            ($"{this.GetName()} {this.GetHashCode()} active: {m_IsActive}").Send();
+        }
+
+        public IEnumerator DeactivateAsync(Action<bool> callback)
+        {
+            Deactivate();
+            callback.Invoke(m_IsActive);
+            yield return null;
+        }
+
+
         // MESSAGE //
-        public IMessage Send(string text, LogFormat format = LogFormat.None) 
+        public IMessage Send(string text, LogFormat format = LogFormat.None)
             => Send(new Message(this, text, format));
-        
+
         public IMessage Send(IMessage message)
         {
             Message?.Invoke(message);
             return Messager.Send(m_IsDebug, this, message.Text, message.LogFormat);
         }
-        
+
         // CALLBACK //
         public void OnMessage(IMessage message) =>
             Send($"{message.Sender}: {message.Text}", message.LogFormat);
+
+
+        // UNITY //
+        private void Awake()
+            => Configure();
+
+        private void OnEnable()
+            => Init();
+
+        private void OnDisable()
+            => Dispose();
+
     }
+
+
     
-    public interface IConfigurable: IDisposable
-    {
-        event Action Initialized;
-        event Action Disposed;
-        
-        void Configure(params object[] args);
-        void Init();
-    }
-
-
-    public interface IConfig
-    {
-        
-    }
 
 }
 

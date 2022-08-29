@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace APP
 {
-    public static class ObjectExtension
+    public static class ExtensionObject
     {
 
         public static string GetName(this object instance) =>

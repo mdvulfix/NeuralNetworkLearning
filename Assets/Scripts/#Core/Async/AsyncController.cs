@@ -9,15 +9,15 @@ using APP.Factory;
 
 namespace APP
 {
-    public class AsyncController : AController<AsyncController, AsyncControllerConfig>, IController, IUpdateble
+    public class AsyncController : AController, IController, IUpdateble
     {
         private AsyncControllerConfig m_Config;
 
-        private static List<Awaiter> m_AwaiterIsReady;
+        private static List<IAwaiter> m_AwaiterIsReady;
         private int m_AwaiterIsReadyLimit = 5;
 
         private static List<FuncAsyncInfo> m_FuncExecuteQueue;
-        private Awaiter m_FuncQueueAwaiter;
+        private IAwaiter m_FuncQueueAwaiter;
 
         private PoolController<Awaiter> m_PoolController;
 
@@ -26,20 +26,15 @@ namespace APP
         public AsyncController() { }
         public AsyncController(AsyncControllerConfig config, params object[] args)
         {
-            Setup(config);
-            Configure(args);
+            Configure(config, args);
             Init();
         }
 
-        public override void Setup(AsyncControllerConfig config)
-        {
-            Config = config;
-        }
 
-        public override void Configure(params object[] args)
+        public override void Configure(IConfig config, params object[] args)
         {
             if (m_AwaiterIsReady == null)
-                m_AwaiterIsReady = new List<Awaiter>(m_AwaiterIsReadyLimit);
+                m_AwaiterIsReady = new List<IAwaiter>(m_AwaiterIsReadyLimit);
 
             if (m_FuncExecuteQueue == null)
                 m_FuncExecuteQueue = new List<FuncAsyncInfo>(100);
@@ -49,11 +44,14 @@ namespace APP
 
         public override void Init()
         {
-            m_FuncQueueAwaiter = Awaiter.Get("FuncQueueAwaiter");
+            var awaiterConfig = new AwaiterConfig("FuncQueueAwaiter");
+            m_FuncQueueAwaiter = Awaiter.Get(awaiterConfig);
 
-            var poolControllerFactory = AFactory.Get<Factory<PoolController<Awaiter>, PoolControllerConfig>>();
-            var poolableFactory = AFactory.Get<Factory<Awaiter>>() as IFactory<IPoolable>;
+            
+
+            var poolableFactory = new FactoryAwaiter();
             var poolControllerConfig = new PoolControllerConfig(poolableFactory);
+            
             m_PoolController = PoolController<Awaiter>.Get(poolControllerFactory, poolControllerConfig);
             
             

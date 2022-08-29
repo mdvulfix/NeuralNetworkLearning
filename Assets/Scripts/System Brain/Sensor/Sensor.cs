@@ -5,11 +5,8 @@ using UnityEngine;
 
 namespace APP.Brain
 {
-    public class Sensor : MonoBehaviour, IConfigurable
+    public class Sensor : ACacheable, IConfigurable
     {
-
-        private SensorConfig m_Config;
-        
         [SerializeField] private float m_ExciteRate;
         
         //Fixed frame rate = 0.02;
@@ -24,13 +21,12 @@ namespace APP.Brain
         private MeshRenderer m_Renderer;
         
 
-        public IConfig Config => m_Config;
-
         public event Action<Сharge> Excited;
 
 
-        public virtual void Configure(params object[] args)
+        public override void Configure(params object[] args)
         {
+            
             m_GameObject = gameObject;
 
             if (m_GameObject.TryGetComponent<Transform>(out m_Transform) == false)
@@ -41,36 +37,7 @@ namespace APP.Brain
                 m_Renderer = m_GameObject.AddComponent<MeshRenderer>();
                 //m_Renderer.sprite = HandlerSprite.Circle;
             }
-
-            if(args.Length > 0)
-            {
-                foreach (var arg in args)
-                {
-                    if(arg is SensorConfig)
-                    {
-                        m_Config = (SensorConfig)arg;
-                        
-
-                    }
-                }
-            }
-
-
-
              
-        }
-
-
-        public virtual void Init()
-        {
-
-
-        }
-
-        public virtual void Dispose()
-        {
-
-
         }
         
 

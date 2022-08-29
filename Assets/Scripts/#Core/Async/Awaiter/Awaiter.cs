@@ -4,19 +4,9 @@ using UnityEngine;
 
 namespace APP
 {
-    public interface IAwaiter
-    {
-        bool IsReady { get; }
 
-        event Action<Awaiter> FuncStarted;
-        event Action<Awaiter> FuncCompleted;
-        event Action<Awaiter, bool> StateChanged;
 
-        void Run(Func<Action<bool>, IEnumerator> func);
-        void Stop();
-    }
-
-    public class Awaiter : AConfigurable, IAwaiter, IPoolable 
+    public class Awaiter : AConfigurableOnScene, IAwaiter 
     {
 
         private static Transform ROOT;
@@ -24,6 +14,7 @@ namespace APP
 
 
         [SerializeField] private bool m_IsReady;
+        [SerializeField] private string m_Label;
 
 
         private Func<IEnumerator> Func;
@@ -36,14 +27,17 @@ namespace APP
         public event Action<Awaiter, bool> StateChanged;
 
         public Awaiter() { }
-        public Awaiter(params object[] args)
+        public Awaiter(AwaiterConfig config, params object[] args)
         {
-            Configure(args);
+            Configure(config, args);
             Init();
         }
 
-        public override void Configure(params object[] args)
+        public override void Configure(IConfig config, params object[] args)
         {
+            var awaiterConfig = (AwaiterConfig)config;
+            m_Label = awaiterConfig.Label;
+            
             if (ROOT == null)
                 ROOT = SceneRoot.AWAITER;
 
@@ -53,6 +47,13 @@ namespace APP
             base.Configure();
         }
 
+
+        public override void Init()
+        {
+            OnSceneGameObject.name = m_Label;
+            
+            base.Init();
+        }
 
         public void Run(Func<Action<bool>, IEnumerator> func)
         {
@@ -107,22 +108,72 @@ namespace APP
         
         
         // FACTORY //
-        public static TAwaiter Get<TAwaiter>(IFactory<TAwaiter> factory, params object[] arg)
-        where TAwaiter: class, IAwaiter, new()
-            => factory.Get(arg, "Awaiter", ROOT_POOL, ROOT);
+        public static IAwaiter Get(IFactory<IAwaiter, IConfig> factory, IConfig config, params object[] args)
+            => factory.Get(config, args);
+    
+        // FACTORY //
+        public static IAwaiter Get(IConfig config, params object[] args)
+        {
+            var obj =  new GameObject("Awaiter");
+            obj.SetActive(false);
+            obj.transform.SetParent(ROOT_POOL);
+            
+            var awaiter = obj.AddComponent<Awaiter>();
+            awaiter.Configure(config, args);
+            awaiter.Init();
+
+            return awaiter;
+        }
+    
+    
+    
     }
 
     public struct AwaiterConfig : IConfig
     {
-        public void Setup(IConfigurable configurable) { }
+        public AwaiterConfig(string label)
+        {
+            Label = label;
+        }
+
+        public string Label { get; private set; }
+
+
 
     }
 
+    public interface IAwaiter: IPoolable
+    {
+        bool IsReady { get; }
+
+        event Action<Awaiter> FuncStarted;
+        event Action<Awaiter> FuncCompleted;
+        event Action<Awaiter, bool> StateChanged;
+
+        void Run(Func<Action<bool>, IEnumerator> func);
+        void Stop();
+    }
+
+    public class FactoryAwaiter : IFactory<IAwaiter>
+    {
+        //public FactoryPool() { }
+   
+        public IAwaiter Get(params object[] args)
+        {
+            var instance =  new Awaiter();
+            instance.Configure(args);
+            instance.Init();
+
+            return instance;
+        }
+    
+    }
 
 }
 
 namespace APP
 {
+    
     public partial class SceneRoot
     {
         public static Transform AWAITER;

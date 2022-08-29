@@ -2,16 +2,25 @@ using UnityEngine;
 
 namespace APP
 {
-    public class AwaiterController : MonoBehaviour
+    public class AwaiterController : AConfigurableOnScene
     {
         [SerializeField] private Awaiter m_Awaiter;
         [SerializeField] private bool m_SetActive = false;
 
-        public void Activate() =>
-            StartCoroutine(m_Awaiter.ActivateAsync(m_Awaiter.Callback));
+        public override void Init()
+        {
+            base.Init();
+            m_Awaiter.Activate();
+            
+        }
+            
 
-        public void Deactivate() =>
-            StartCoroutine(m_Awaiter.DeactivateAsync(m_Awaiter.Callback));
+        public override void Dispose()
+        {
+            m_Awaiter.Deactivate();
+            base.Dispose();
+        }
+            
 
 
         public void Update()
