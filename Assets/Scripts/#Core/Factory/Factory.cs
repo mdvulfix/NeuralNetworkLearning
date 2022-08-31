@@ -1,95 +1,91 @@
-
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace APP
 {
+    public class Factory<T> : Factory
+    where T : IConfigurable
+    {
+        public T Get(params object[] args)
+            => Get<T>(args);
+
+
+        public void Set(IConstructor constructor)
+            => Set<T>(constructor);
+    }
+
+
+    public class Factory : IFactory
+    {
+        private Dictionary<Type, IConstructor> m_Constractors;
+
+        public Factory()
+        {
+            m_Constractors = new Dictionary<Type, IConstructor>(15);
+        }
+
+        public T Get<T>(params object[] args)
+        where T : IConfigurable
+        {
+            if (Get<T>(out var constructor))
+                return (T)constructor.Create<T>(args);
+
+            return Create<T>(args);
+        }
+
+        protected void Set<T>(IConstructor constructor)
+        {
+            try { m_Constractors.Add(typeof(T), constructor); }
+            catch (Exception exeption) { Debug.LogWarning($"The instance constructor is already added! Exeption: { exeption.Message }"); }
+
+        }
+
+
+        protected bool Get<T>(out IConstructor constructor)
+            => m_Constractors.TryGetValue(typeof(T), out constructor);
+    
+        public static T Create<T>(params object[] args)
+            => (T)Activator.CreateInstance(typeof(T), args);
+    
+    }
+
+
 
     public interface IFactory
     {
-        T Get<T, TConfig>(TConfig config, params object[] args);
-        T Get<T>(params object[] args);
-
+        T Get<T>(params object[] args)
+        where T : IConfigurable;
     }
 
-    public abstract class AFactory<T, TConfig> : AFactory<T>
+
+
+    public delegate T PredefinedConstructor<T>(params object[] args);
+
+    public class Constructor : IConstructor
     {
+        private PredefinedConstructor<IConfigurable> m_Func;
 
-        public override void Set(PredefinedConstructor constructor)
-            => base.Set(constructor);
-
-
-        public T Get(TConfig config, params object[] args)
-            => base.Get(config, args);
-    }
-
-    public abstract class AFactory<T>
-    {
-        private static Dictionary<Type, PredefinedConstructor> m_PredefinedConstructors;
-
-        public delegate T PredefinedConstructor(params object[] args);
-
-        public virtual void Set(PredefinedConstructor constructor) =>
-            m_PredefinedConstructors.Add(typeof(T), constructor);
-
-
-        public T Get(params object[] args)
+        public Constructor(PredefinedConstructor<IConfigurable> func)
         {
-            if (m_PredefinedConstructors.TryGetValue(typeof(T), out var constructor))
-            {
-                IConfig config;
-
-                foreach (var arg in args)
-                {
-                    if (arg is IConfig)
-                    {
-                        config = (IConfig)arg;
-                        return constructor(config, args);
-                    }
-                }
-            }
-            
-
-            return Constructor.Create<T>(args);
+            m_Func = func;
         }
-    }
+
+        
+        public T Create<T>(params object[] args)
+        where T : IConfigurable
+            => (T)m_Func.Invoke(args);
 
 
-    public static class Constructor
+        public static IConstructor Get(PredefinedConstructor<IConfigurable> func)
+            => new Constructor(func);
+    }   
+        
+    public interface IConstructor
     {
-        public static T Create<T>(params object[] args)
-        {
-            IConfig config;
-
-            foreach (var arg in args)
-            {
-                if (arg is IConfig)
-                {
-                    config = (IConfig)arg;
-                    return (T)Activator.CreateInstance(typeof(T), config, args);
-                }
-            }
-
-            return (T)Activator.CreateInstance(typeof(T), args);
-
-        }
+        T Create<T>(params object[] args)
+        where T : IConfigurable;
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 }
-

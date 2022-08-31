@@ -6,52 +6,52 @@ using UnityEngine;
 namespace APP
 {
     [Serializable]
-    public class PictureController
+    public class PictureController: AConfigurable, IConfigurable
     {
+       
         [SerializeField] private int m_Widht = 50;
         [SerializeField] private int m_Height = 50;
 
-        private PictureControllerConfig m_Config;
-        
         private Color m_BackgroundColor = Color.black;
         private Color m_HoverColor = Color.grey;
         
         public Picture Picture { get; private set; }
 
-        public virtual void Configure(params object[] args)
+        public PictureController() { }
+        public PictureController(params object[] args)
+            => Configure(args);
+        
+        public override void Configure(params object[] args)
         {
-            if(args.Length > 0)
-            {
-                foreach (var arg in args)
-                {
-                    if(arg is PictureControllerConfig)
-                    {
-                        m_Config = (PictureControllerConfig)arg;
+            
+            var config = (PictureControllerConfig)args[PARAM_INDEX_Config];
 
-                        m_BackgroundColor = m_Config.BackgroundColor;
-                        m_HoverColor = m_Config.HoverColor;
-                    }
-                }
-            }
+            m_BackgroundColor = config.BackgroundColor;
+            m_HoverColor = config.HoverColor;
+
+            
+            base.Configure(args);
         }
 
-        public virtual void Init()
+        public override void Init()
         {
             
             var pictureConfig = new PictureConfig(m_Widht, m_Height, m_BackgroundColor, m_HoverColor);
             
             //TODO: Picture controller init
-            Picture = Picture.Get();
+            //Picture = Picture.Get();
             //HandlerAsync.Execute(() => AwaitSceneObjectLoadingAsync(Picture));
             
-            
-            Picture.Configure(pictureConfig);
-            Picture.Init();
+            Picture = new Picture(pictureConfig);
+
+            base.Init();
         }
 
-        public virtual void Dispose()
+        public override void Dispose()
         {
             Picture.Dispose();
+
+            base.Dispose();
         }
 
 
@@ -64,17 +64,17 @@ namespace APP
 
 
     
-        public IEnumerator AwaitSceneObjectLoadingAsync(ILoadable loadable, float awaiting = 5f)
+        public IEnumerator AwaitLoadingAsync(IActivatable activatable, float awaiting = 5f)
         {
-            while (loadable.IsLoaded == false && awaiting > 0)
+            while (activatable.IsActive == false && awaiting > 0)
             {
                 yield return new WaitForSeconds(1);
                 awaiting -= Time.deltaTime;
             }
         }
-    
-    
     }
+
+
 
     public struct PictureControllerConfig
     {

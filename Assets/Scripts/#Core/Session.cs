@@ -6,40 +6,26 @@ using UnityEngine;
 namespace APP
 {
     
-    public class Session : AScenable, IConfigurable
+    public class Session : AConfigurableOnAwake, IConfigurable, IUpdateble
     {
         
         [SerializeField] private GameObject m_Brain;
         
         public static SceneRootData m_SceneRootData;
 
-        public event Action Initialized;
-        public event Action Disposed;
-
 
         public override void Configure(params object[] args)
         {
+            
+            
             m_SceneRootData = new SceneRootData(m_Brain);
+
+            base.Configure(args);
         }
 
 
 
-
-
-
-
-        private void Awake() =>
-            Configure();
-
-        private void OnEnable() =>
-            Init();
-
-        private void OnDisable() =>
-            Dispose();
-
-
-
-        private void Update()
+        public void Update()
         {
 
 

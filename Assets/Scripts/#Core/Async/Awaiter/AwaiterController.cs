@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace APP
 {
-    public class AwaiterController : AConfigurableOnScene
+    public class AwaiterController : AConfigurableOnAwake, IConfigurable
     {
         [SerializeField] private Awaiter m_Awaiter;
         [SerializeField] private bool m_SetActive = false;

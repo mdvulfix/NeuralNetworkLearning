@@ -20,8 +20,8 @@ namespace APP.Test
         private void Awake()
         {
             m_Controllers = new List<AsyncController>(10);
-            for (int i = 0; i < 1; i++)
-                m_Controllers.Add(AsyncController.Get(new AsyncControllerConfig()));
+            //for (int i = 0; i < 1; i++)
+                //m_Controllers.Add(AsyncController.Get(new AsyncControllerConfig()));
             
 
         }

@@ -4,14 +4,11 @@ using UnityEngine;
 
 namespace APP
 {
-    public class Builder : MonoBehaviour
+    public class Builder : AConfigurableOnAwake, IConfigurable, IUpdateble
     {
-        
+                
         [SerializeField] private Picture m_Picture;
         [SerializeField] private Pencil m_Pencil;
-        
-        
-        private BuilderConfig m_Config;
         
         [SerializeField] private PencilController m_PencilController;
         [SerializeField] private PictureController m_PictureController;
@@ -25,72 +22,47 @@ namespace APP
         private Color m_DrawColor = Color.green;
         
 
-        public virtual void Configure(params object[] args)
+        public override void Configure(params object[] args)
         {
-            if(args.Length > 0)
-            {
-                foreach (var arg in args)
-                {
-                    if(arg is BuilderConfig)
-                        m_Config = (BuilderConfig)args[0];
-                }
-            }
-
-
-            
-            m_PencilController = new PencilController();
-            m_PictureController = new PictureController();
-            m_UpdateController = new UpdateController();
-            
+            var config = new BuilderConfig();
+            base.Configure(config);
         }
 
-        public virtual void Init()
+        public override void Init()
         {
-            m_UpdateController.Configure();
-            m_UpdateController.Init();
-            
+            var updateControllerConfig = new UpdateControllerConfig();
+            m_UpdateController = new UpdateController(updateControllerConfig);
             
             var pictureControllerConfig = new PictureControllerConfig(m_BackgroundColor, m_HoverColor);
-            m_PictureController.Configure();
-            m_PictureController.Init();
+            m_PictureController = new PictureController(pictureControllerConfig);
             m_Picture = m_PictureController.Picture;
             
             var pencilControllerConfig = new PencilControllerConfig(m_BackgroundColor, m_DrawColor, m_PictureController);
-            m_PencilController.Configure(pencilControllerConfig);
-            m_PencilController.Init();
+            m_PencilController = new PencilController(pencilControllerConfig);
             m_Pencil = m_PencilController.Pencil;
 
 
-
-            
-            
+            base.Init();
         }
 
-        public virtual void Dispose()
+        public override void Dispose()
         {
             m_PencilController.Dispose();
             m_PictureController.Dispose();
         
             m_UpdateController.Dispose();
+
+            base.Dispose();
         }
         
         
-        
-        private void Awake() =>
-            Configure();
+        public void Update() 
+            => m_UpdateController.Update();
 
-        private void OnEnable() =>
-            Init();
-
-        private void OnDisable() =>
-            Dispose();
-        
-        private void Update() =>
-            m_UpdateController.Update();
 
     }
 
-    public struct BuilderConfig
+    public struct BuilderConfig: IConfig
     {
         
     }

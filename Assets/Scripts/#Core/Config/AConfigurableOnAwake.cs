@@ -6,26 +6,26 @@ using UnityEngine;
 namespace APP
 {
 
-    public abstract class AConfigurableOnScene : MonoBehaviour, IMessager
+    public abstract class AConfigurableOnAwake : MonoBehaviour, IMessager, IActivatable
     {
 
+        public static readonly int PARAM_INDEX_Config = 0;
+        
         private static Transform ROOT;
         private static Transform ROOT_POOL;
 
+        private IConfig m_Config;
         
+
         [SerializeField] private bool m_IsDebug = true;
         
         [SerializeField] private bool m_IsConfigured;
         [SerializeField] private bool m_IsInitialized;
-        
-        
         [SerializeField] private bool m_IsActive;
 
 
-        public IConfig Config { get; protected set; }
         
-        public GameObject OnSceneGameObject => gameObject;
-        public Transform OnSceneTransform => gameObject.transform;
+        public GameObject OnSceneObject => gameObject;
 
         public bool IsConfigured => m_IsConfigured;
         public bool IsInitialized => m_IsInitialized;
@@ -39,22 +39,14 @@ namespace APP
 
 
         // CONFIGURE //
-        public virtual void Configure<TConfig>(TConfig config, params object[] args)
-        where TConfig: struct, IConfig
-        {
-            Config = config;
-            Configure(args);
-        }
-
-        public virtual void Configure(IConfig config, params object[] args)
-        {
-            Config = config;
-            Configure(args);
-        }
-       
         public virtual void Configure(params object[] args)
         {
-
+            if (args.Length > 0)
+                foreach (var arg in args)
+                    if (arg is IConfig)
+                        m_Config = (IConfig)arg;
+            
+            
             m_IsConfigured = true;
             Send("Configuration completed.");
         }
@@ -133,6 +125,11 @@ namespace APP
         }
 
 
+        
+        public IConfig GetConfig()
+            => m_Config;
+        
+        
         // MESSAGE //
         public IMessage Send(string text, LogFormat format = LogFormat.None)
             => Send(new Message(this, text, format));
@@ -161,7 +158,14 @@ namespace APP
     }
 
 
-    
+
+    public interface IActivatable
+    {
+        bool IsActive {get; }
+        
+        void Activate();
+        void Deactivate();
+    }
 
 }
 

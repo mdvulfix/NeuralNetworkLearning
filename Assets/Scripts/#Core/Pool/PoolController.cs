@@ -12,33 +12,33 @@ namespace APP.Pool
     {
         private static IPool<TPoolable> m_Pool;
 
-        private IFactory<TPoolable> m_FactoryPoolable;
-        private IFactory<TPoolable, TPoolableConfig> m_FactoryPoolable;
+        //private IFactory<TPoolable> m_FactoryPoolable;
+        //private IFactory<TPoolable, TPoolableConfig> m_FactoryPoolable;
 
         public PoolController() { }
-        public PoolController(PoolControllerConfig config, params object[] args)
+        public PoolController(params object[] args)
         {
-            Configure(config, args);
+            Configure(args);
             Init();
         }
 
-        public override void Configure(IConfig config, params object[] args)
+        public override void Configure(params object[] args)
         {
-            var poolControllerConfig = (PoolControllerConfig)config;
+            var config = (PoolControllerConfig)args[PARAM_INDEX_Config];
 
-            m_FactoryPoolable = poolControllerConfig.PoolableFactory;
+            //m_FactoryPoolable = config.PoolableFactory;
 
             base.Configure();
         }
 
         public override void Init()
         {
-            var limit = 5;
-            var poolConfig = new PoolConfig(limit, () => (TPoolable)m_FactoryPoolable.Get());
+            //var limit = 5;
+            //var poolConfig = new PoolConfig(limit, () => (TPoolable)m_FactoryPoolable.Get());
             
 
-            if (m_Pool == null)
-                m_Pool = Pool<TPoolable>.Get(poolConfig);
+            //if (m_Pool == null)
+            //    m_Pool = Pool<TPoolable>.Get(poolConfig);
 
             base.Init();
         }
@@ -82,8 +82,8 @@ namespace APP.Pool
 
 
         // FACTORY //
-        public static IPoolController<TPoolable> Get(IFactory<IPoolController<TPoolable>, IConfig> factory, IConfig config, params object[] args)
-            => factory.Get(config, args);
+        //public static IPoolController<TPoolable> Get(IFactory<IPoolController<TPoolable>, IConfig> factory, IConfig config, params object[] args)
+        //    => factory.Get(config, args);
 
         public static IPoolController<TPoolable> Get(IConfig config, params object[] args)
         {
@@ -95,28 +95,16 @@ namespace APP.Pool
         }
     }
 
-    public struct PoolControllerConfig<IPoolable> : IConfig
+    public struct PoolControllerConfig : IConfig
     {
-        public IFactory<IPoolable> PoolableFactory {get; private set; }
-
-
-        public PoolControllerConfig(IFactory<IPoolable> poolableFactory)
-        {
-            PoolableFactory = poolableFactory;
-        }
+        //public IFactory<IPoolable> PoolableFactory {get; private set; }
+        //
+        //
+        //public PoolControllerConfig(IFactory<IPoolable> poolableFactory)
+        //{
+        //    PoolableFactory = poolableFactory;
+        //}
     }
-
-    public struct PoolControllerConfig<TPoolable, TPoolableConfig>  : IConfig
-    {
-        public IFactory<TPoolable, TPoolableConfig> PoolableFactory {get; private set; }
-
-
-        public PoolControllerConfig(IFactory<TPoolable, TPoolableConfig> poolableFactory)
-        {
-            PoolableFactory = poolableFactory;
-        }
-    }
-
 
 
     public interface IPoolController<TPoolable> : IController, IUpdateble

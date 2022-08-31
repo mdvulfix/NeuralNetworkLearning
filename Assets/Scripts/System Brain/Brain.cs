@@ -5,49 +5,38 @@ using UnityEngine;
 
 namespace APP.Brain
 {
-    public class Brain : MonoBehaviour, IConfigurable<BrainConfig>
-    {
+    public class Brain : AConfigurableOnAwake, IConfigurable
+    {       
         private IRecognizable m_Recognizable;
         private IEnumerable<ISensible> m_Sensibles;
-        
-
+    
         private List<Neuron> m_Neurons;
         private NeuronController m_NeuronController;
 
         private Neuron[,,] m_LayerMatrixInput;
         private Neuron[,,] m_LayerMatrixAnalize;
         
-        
-        
+    
         private Vector3Int m_MatrixSize;
         private int m_MatrixDimension = 8;
 
-        public BrainConfig Config {get; private set; }
 
-        
-        public virtual void Setup(BrainConfig config)
+        public override void Configure(params object[] args)
         {
-            Config = config;
+            var config = (BrainConfig)args[PARAM_INDEX_Config];
+            m_Recognizable = config.Recognizable;
             
-            m_Recognizable = Config.Recognizable;
+            base.Configure(args);
+
+        }   
+
+        public override void Init()
+        {
             m_Sensibles = m_Recognizable.GetSensibles();
-        }
-        
-        
-        public virtual void Configure(params object[] args)
-        {
-            
-            
-            
-            
-            
+
             m_Neurons = new List<Neuron>();
             m_MatrixSize = new Vector3Int(m_MatrixDimension, m_MatrixDimension, m_MatrixDimension);
             m_LayerMatrixAnalize = new Neuron[m_MatrixSize.x, m_MatrixSize.y, m_MatrixSize.z];
-        }   
-
-        public virtual void Init()
-        {
             
             // Build input layer
             
@@ -87,9 +76,11 @@ namespace APP.Brain
                 }
             }
             */
+
+            base.Init();
         }
 
-        public virtual void Dispose()
+        public override void Dispose()
         {
             foreach (var neuron in m_Neurons)
             {
@@ -98,6 +89,8 @@ namespace APP.Brain
                 neuron.Divided -= OnNeuronDivided;
                 neuron.Dead -= OnNeuronDead;
             }
+
+            base.Dispose();
         }
 
 

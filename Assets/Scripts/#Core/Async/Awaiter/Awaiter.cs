@@ -6,7 +6,7 @@ namespace APP
 {
 
 
-    public class Awaiter : AConfigurableOnScene, IAwaiter 
+    public class Awaiter : AConfigurableOnAwake, IConfigurable
     {
 
         private static Transform ROOT;
@@ -27,15 +27,15 @@ namespace APP
         public event Action<Awaiter, bool> StateChanged;
 
         public Awaiter() { }
-        public Awaiter(AwaiterConfig config, params object[] args)
+        public Awaiter(params object[] args)
         {
-            Configure(config, args);
+            Configure(args);
             Init();
         }
 
-        public override void Configure(IConfig config, params object[] args)
+        public override void Configure(params object[] args)
         {
-            var awaiterConfig = (AwaiterConfig)config;
+            var awaiterConfig = (AwaiterConfig)args[PARAM_INDEX_Config];
             m_Label = awaiterConfig.Label;
             
             if (ROOT == null)
@@ -50,7 +50,7 @@ namespace APP
 
         public override void Init()
         {
-            OnSceneGameObject.name = m_Label;
+            OnSceneObject.name = m_Label;
             
             base.Init();
         }
@@ -108,18 +108,18 @@ namespace APP
         
         
         // FACTORY //
-        public static IAwaiter Get(IFactory<IAwaiter, IConfig> factory, IConfig config, params object[] args)
-            => factory.Get(config, args);
+        //public static IAwaiter Get(IFactory<IAwaiter, IConfig> factory, IConfig config, params object[] args)
+        //    => factory.Get(config, args);
     
         // FACTORY //
-        public static IAwaiter Get(IConfig config, params object[] args)
+        public static Awaiter Get(params object[] args)
         {
             var obj =  new GameObject("Awaiter");
             obj.SetActive(false);
             obj.transform.SetParent(ROOT_POOL);
             
             var awaiter = obj.AddComponent<Awaiter>();
-            awaiter.Configure(config, args);
+            awaiter.Configure(args);
             awaiter.Init();
 
             return awaiter;
@@ -154,6 +154,8 @@ namespace APP
         void Stop();
     }
 
+    
+    /*
     public class FactoryAwaiter : IFactory<IAwaiter>
     {
         //public FactoryPool() { }
@@ -168,6 +170,7 @@ namespace APP
         }
     
     }
+    */
 
 }
 

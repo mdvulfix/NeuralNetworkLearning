@@ -8,16 +8,14 @@ using APP.Brain;
 namespace APP
 {
     [Serializable]
-    public class Picture: MonoBehaviour, IRecognizable, ILoadable
+    public class Picture : AConfigurable, IConfigurable, IRecognizable
     {
-        private PictureConfig m_Config;
-        
         private readonly string FOLDER_SPRITES = "Sprites";
         private string m_SpriteLabel = "box_white";
-        
+
         [SerializeField] private int m_Width;
         [SerializeField] private int m_Height;
-        
+
         private Pixel[,] m_Matrix;
         private List<Pixel> m_Pixels;
 
@@ -25,54 +23,44 @@ namespace APP
         [SerializeField] private Color m_HoverColor = Color.grey;
 
         private Sprite m_Sprite;
-        
-        public bool IsActive {get; private set; }
-        public bool IsLoaded {get; private set; }
-        public GameObject GameObject {get; private set; }
-    
+
         public Pixel PixelActive => m_Pixels.Where(pixel => pixel.IsActive == true).First();
 
+        public Picture() { }
+        public Picture(params object[] args)
+            => Configure(args);
 
-        public virtual void Configure(params object[] args)
+        
+        public override void Configure(params object[] args)
         {
-            
-            //GameObject = new GameObject("Picture");
-            GameObject = gameObject;
-            GameObject.name = "Picture";
+            var config = (PictureConfig)args[PARAM_INDEX_Config];
+
+            m_Width = config.Width;
+            m_Height = config.Height;
+            m_BackgroundColor = config.BackgroundColor;
+            m_HoverColor = config.HoverColor;
+
+            //OnSceneObject.name = "Picture";
 
             m_Sprite = Resources.Load<Sprite>($"{FOLDER_SPRITES}/{m_SpriteLabel}");
 
-
-            if(args.Length > 0)
-            {
-                foreach (var arg in args)
-                {
-                    if(arg is PictureConfig)
-                    {
-                        m_Config = (PictureConfig)arg;
-
-                        m_Width = m_Config.Width;
-                        m_Height = m_Config.Height;
-                        m_BackgroundColor = m_Config.BackgroundColor;
-                        m_HoverColor = m_Config.HoverColor;
-                    }
-                }
-            }
-            
             m_Matrix = new Pixel[m_Width, m_Height];
             m_Pixels = new List<Pixel>();
+
+            base.Configure(args);
         }
 
-        public virtual void Init()
+        public override void Init()
         {
+
+            var parent = new GameObject("Picture");
             
-            /*
             for (int x = 0; x < m_Width; x++)
             {
                 for (int y = 0; y < m_Height; y++)
                 {
                     var position = new Vector3(x - m_Width/2, y - m_Height/2);
-                    var pixelConfig = new PixelConfig(position, GameObject, m_Sprite, m_BackgroundColor, m_HoverColor);
+                    var pixelConfig = new PixelConfig(position, parent, m_Sprite, m_BackgroundColor, m_HoverColor);
                     
                     var objPixel = new GameObject("Pixel");
                     var pixel = objPixel.AddComponent<Pixel>();
@@ -83,10 +71,11 @@ namespace APP
                     m_Pixels.Add(m_Matrix[x, y] = pixel);
                 }
             }
-            */
+
+            base.Init();
         }
 
-        public virtual void Dispose()
+        public override void Dispose()
         {
             /*
             foreach (var pixel in m_Pixels)
@@ -95,32 +84,13 @@ namespace APP
 
             m_Pixels.Clear();
             */
+
+            base.Dispose();
         }
-
-
-        public bool Load() { return true; }
-        public bool Unload() { return true; }
-        public bool Activate() { return true; }
-        public bool Deactivate() { return true; }
 
 
         public IEnumerable<ISensible> GetSensibles() =>
             m_Pixels;
-
-        
-
-        private void OnEnable() =>
-            IsLoaded = true;
-
-        private void OnDisable() =>
-            IsLoaded = false;
-    
-
-        public static Picture Get()
-        {
-            var obj = new GameObject("Picture");
-            return obj.AddComponent<Picture>();
-        }
 
 
     }

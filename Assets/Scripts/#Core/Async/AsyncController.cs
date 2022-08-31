@@ -5,36 +5,36 @@ using System.Linq;
 using UnityEngine;
 
 using APP.Pool;
-using APP.Factory;
 
 namespace APP
 {
     public class AsyncController : AController, IController, IUpdateble
     {
-        private AsyncControllerConfig m_Config;
 
-        private static List<IAwaiter> m_AwaiterIsReady;
+        private static List<Awaiter> m_AwaiterIsReady;
         private int m_AwaiterIsReadyLimit = 5;
 
         private static List<FuncAsyncInfo> m_FuncExecuteQueue;
         private IAwaiter m_FuncQueueAwaiter;
 
-        private PoolController<Awaiter> m_PoolController;
+        //private PoolController<Awaiter> m_PoolController;
 
         public event Action<FuncAsyncInfo> FuncAsyncExecuted;
 
         public AsyncController() { }
-        public AsyncController(AsyncControllerConfig config, params object[] args)
+        public AsyncController(params object[] args)
         {
-            Configure(config, args);
+            Configure(args);
             Init();
         }
 
 
-        public override void Configure(IConfig config, params object[] args)
+        public override void Configure(params object[] args)
         {
+            var config = (AsyncControllerConfig)args[PARAM_INDEX_Config];
+            
             if (m_AwaiterIsReady == null)
-                m_AwaiterIsReady = new List<IAwaiter>(m_AwaiterIsReadyLimit);
+                m_AwaiterIsReady = new List<Awaiter>(m_AwaiterIsReadyLimit);
 
             if (m_FuncExecuteQueue == null)
                 m_FuncExecuteQueue = new List<FuncAsyncInfo>(100);
@@ -45,20 +45,20 @@ namespace APP
         public override void Init()
         {
             var awaiterConfig = new AwaiterConfig("FuncQueueAwaiter");
-            m_FuncQueueAwaiter = Awaiter.Get(awaiterConfig);
+            //m_FuncQueueAwaiter = Awaiter.Get(awaiterConfig);
 
             
 
-            var poolableFactory = new FactoryAwaiter();
-            var poolControllerConfig = new PoolControllerConfig(poolableFactory);
+            //var poolableFactory = new FactoryAwaiter();
+            //var poolControllerConfig = new PoolControllerConfig(poolableFactory);
             
-            m_PoolController = PoolController<Awaiter>.Get(poolControllerFactory, poolControllerConfig);
+            //m_PoolController = PoolController<Awaiter>.Get(poolControllerFactory, poolControllerConfig);
             
             
             
             
             m_FuncQueueAwaiter.Init();
-            m_PoolController.Init();
+            //m_PoolController.Init();
 
 
 
@@ -67,7 +67,7 @@ namespace APP
 
         public override void Dispose()
         {
-            m_PoolController.Dispose();
+            //m_PoolController.Dispose();
             m_FuncQueueAwaiter.Dispose();
 
             base.Dispose();
@@ -75,7 +75,7 @@ namespace APP
 
         public void Update()
         {
-            m_PoolController.Update();
+            //m_PoolController.Update();
             
             LimitUpdate();
             FuncQueueUpdate();
@@ -99,15 +99,20 @@ namespace APP
 
         private bool GetAwaiter(out Awaiter awaiter)
         {
-            if ((m_AwaiterIsReady.Count < m_AwaiterIsReadyLimit))
-                LimitUpdate();
+            awaiter = null;
+            
+            //if ((m_AwaiterIsReady.Count < m_AwaiterIsReadyLimit))
+            //    LimitUpdate();
 
-            awaiter = m_AwaiterIsReady[0];
+            //awaiter = m_AwaiterIsReady[0];
             return true;
         }
-
+        
+        
         private bool PopAwaiter(out Awaiter awaiter)
         {
+            awaiter = null;
+            /*
             try
             {
                 if (m_PoolController.Pop(out awaiter))
@@ -121,18 +126,18 @@ namespace APP
                     return true;
                 }
             }
-            catch (Exception exception)
-            {
-                ($"Pop awaiter is failed! Exception: {exception.Message}").Send(LogFormat.Warning);
-                awaiter = null;
-            }
+            catch (Exception exception) { ($"Pop awaiter is failed! Exception: {exception.Message}").Send(LogFormat.Warning); }
+    
 
             ($"Pop awaiter not found!").Send(LogFormat.Warning);
+            */
             return false;
+            
         }
 
         private void PushAwaiter(Awaiter awaiter)
         {
+            /*
             awaiter.Initialized -= OnAwaiterInitialized;
             awaiter.Disposed -= OnAwaiterDisposed;
             awaiter.FuncStarted -= OnAwaiterBusy;
@@ -140,7 +145,9 @@ namespace APP
             awaiter.Dispose();
 
             m_PoolController.Push(awaiter);
+            */
         }
+        
 
         private void LimitUpdate()
         {

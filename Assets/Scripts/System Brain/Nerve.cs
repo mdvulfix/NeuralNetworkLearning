@@ -5,11 +5,9 @@ using UnityEngine;
 namespace APP.Brain
 {
     [Serializable]
-    public abstract class Nerve<T> where T : IConfigurable, new()
+    public abstract class Nerve<T>: AConfigurable, IConfigurable
+    where T : IConfigurable, new()
     {
-        
-        public IConfig Config {get; private set; }
-        
         
         [SerializeField] private Vector3 m_Head;
         [SerializeField] private Vector3 m_Tail;
@@ -21,30 +19,19 @@ namespace APP.Brain
         public Vector3 Tail => m_Tail;
         public float Width => m_Width;
 
-        public virtual void Configure(params object[] args)
+        public override void Configure(params object[] args)
         {
+            var config = (NerveConfig)args[PARAM_INDEX_Config];
             
-            if (args.Length > 0)
-            {
-                foreach (var arg in args)
-                {
-                    if (arg is IConfig)
-                    {
-                        Config = (IConfig)arg;
-                    }
-                }
-            }
-            
-            
-            
-            
-            
-            
-            m_Head = (Vector3) args[0];
-            m_Tail = (Vector3) args[1];
-            m_Width = (float) args[2];
+            m_Head = config.Head;
+            m_Tail = config.Tail;
+            m_Width = config.Width;
+
+            base.Configure(args);
         }
 
+        
+        
         public void Impulse()
         { 
 
@@ -59,8 +46,6 @@ namespace APP.Brain
         }
 
 
-
-
         public static T Get(Vector3 head, Vector3 tail, float width)
         {
             var instance = new T();
@@ -69,5 +54,19 @@ namespace APP.Brain
             return instance;
         }
 
+    }
+
+    public class NerveConfig
+    {
+        public NerveConfig(Vector3 head, Vector3 tail, float width)
+        {
+            Head = head;
+            Tail = tail;
+            Width = width;
+        }
+
+        public Vector3 Head { get; internal set; }
+        public Vector3 Tail { get; internal set; }
+        public float Width { get; internal set; }
     }
 }

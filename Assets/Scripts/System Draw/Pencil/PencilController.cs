@@ -5,65 +5,58 @@ using UnityEngine;
 namespace APP
 {
     [Serializable]
-    public class PencilController: IUpdateble
+    public class PencilController : AConfigurable, IConfigurable, IUpdateble
     {
         private PencilControllerConfig m_Config;
-        
+
         private Color m_ColorDraw = Color.green;
         private Color m_ColorClear = Color.black;
         private PictureController m_PictureController;
-        
-        
-        public Pencil Pencil {get; private set; }
-        
 
-        public virtual void Configure(params object[] args)
+
+        public Pencil Pencil { get; private set; }
+
+        public PencilController() { }
+        public PencilController(params object[] args)
+            => Configure(args);
+
+        public override void Configure(params object[] args)
         {
-            if(args.Length > 0)
-            {
-                foreach (var arg in args)
-                {
-                    if(arg is PencilControllerConfig)
-                    {
-                        m_Config = (PencilControllerConfig)arg;
-                        
-                        m_PictureController = m_Config.PictureController;
-                        m_ColorDraw = m_Config.ColorDraw;
-                        m_ColorClear = m_Config.ColorClear;
-                        
-                    }    
-                }
-            } 
+            var config = (PencilControllerConfig)args[PARAM_INDEX_Config];
+
+            m_PictureController = config.PictureController;
+            m_ColorDraw = config.ColorDraw;
+            m_ColorClear = config.ColorClear;
+
+            base.Configure(args);
         }
 
-        public virtual void Init()
+        public override void Init()
         {
             var pencilConfig = new PencilConfig(m_PictureController, m_ColorDraw, m_ColorClear);
-            
-            Pencil = new Pencil();
-            Pencil.Configure(pencilConfig);
-            Pencil.Init();
-
-
+            Pencil = new Pencil(pencilConfig);
+             
             UpdateController.SetUpdateble(this);
-            
+
+            base.Init();
         }
 
-        
-        public virtual void Dispose()
+
+        public override void Dispose()
         {
             Pencil.Dispose();
-
             UpdateController.RemoveUpdateble(this);
+
+            base.Dispose();
         }
 
-        
+
         public void Update()
         {
-            if(Input.GetMouseButton(0))
+            if (Input.GetMouseButton(0))
                 Pencil.Draw();
 
-            if(Input.GetMouseButton(1))
+            if (Input.GetMouseButton(1))
                 Pencil.Clear();
 
         }
@@ -81,7 +74,7 @@ namespace APP
         public PictureController PictureController { get; private set; }
         public Color ColorDraw { get; private set; }
         public Color ColorClear { get; private set; }
-        
+
     }
 }
 

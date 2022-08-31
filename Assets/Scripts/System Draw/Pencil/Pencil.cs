@@ -5,43 +5,30 @@ using UnityEngine;
 namespace APP
 {
     [Serializable]
-    public class Pencil
-    {
-        private PencilConfig m_Config;
+    public class Pencil: AConfigurable, IConfigurable
+    {        
         private PictureController m_PictureController;
 
         [SerializeField] private Color m_ColorDraw = Color.green;
         [SerializeField] private Color m_ColorClear = Color.black;
         
 
-        public virtual void Configure(params object[] args)
+        public Pencil() { }
+        public Pencil(params object[] args)
+            => Configure(args);
+        
+        public override void Configure(params object[] args)
         {
-            if(args.Length > 0)
-            {
-                foreach (var arg in args)
-                {
-                    if(arg is PencilConfig)
-                    {
-                        m_Config = (PencilConfig)arg;
-                        
-                        m_PictureController = m_Config.PictureController;
-                        m_ColorDraw = m_Config.ColorDraw;
-                        m_ColorClear = m_Config.ColorClear;
-                    }
-                }
-            }
+            var config = (PencilConfig)args[PARAM_INDEX_Config];
+           
+            m_PictureController = config.PictureController;
+            m_ColorDraw = config.ColorDraw;
+            m_ColorClear = config.ColorClear;
+
+            base.Configure(args);
         }
 
 
-        public void Init()
-        {
- 
-        }
-
-        public void Dispose()
-        {
-
-        }
         public void Draw() =>
             m_PictureController.PixelColorize(m_ColorDraw);
 

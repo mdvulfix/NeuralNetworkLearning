@@ -14,22 +14,21 @@ namespace APP
         private Func<IPoolable> GetPoolable;
         
         public Pool() { }
-        public Pool(PoolConfig config, params object[] args)
+        public Pool(params object[] args)
         {
-            Configure(config, args);
+            Configure(args);
             Init();
         }
 
-        public override void Configure(IConfig config, params object[] args)
+        public override void Configure(params object[] args)
         {
-            var poolConfig = (PoolConfig)config;
-            m_Limit = poolConfig.Limit;
+            var config = (PoolConfig)args[PARAM_INDEX_Config];
+            m_Limit = config.Limit;
 
-            GetPoolable = () => poolConfig.GetPoolable();
+            GetPoolable = () => config.GetPoolable();
             
             base.Configure(args);
         }
-
 
 
         public bool Push(TPoolable poolable)
@@ -63,8 +62,8 @@ namespace APP
 
 
         // FACTORY //
-        public static IPool<TPoolable> Get(IFactory<IPool<TPoolable>, IConfig> factory, IConfig config, params object[] args)
-            => factory.Get(config, args);
+        //public static IPool<TPoolable> Get(IFactory<IPool<TPoolable>, IConfig> factory, IConfig config, params object[] args)
+        //    => factory.Get(config, args);
 
 
         public static IPool<TPoolable> Get(IConfig config, params object[] args)
@@ -191,7 +190,7 @@ namespace APP
         public GetPoolableDelegate GetPoolable{ get; private set; }
     }
 
-
+    /*
     public class FactoryPool<TPoolable> : IFactory<Pool<TPoolable>, PoolConfig>
     where TPoolable: IPoolable
     {
@@ -205,6 +204,6 @@ namespace APP
         }
 
     }
-
+    */
 
 }

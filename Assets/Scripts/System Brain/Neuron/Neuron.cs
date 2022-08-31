@@ -5,8 +5,8 @@ using UnityEngine;
 namespace APP.Brain
 {
     [Serializable]
-    public class Neuron : MonoBehaviour, IConfigurable<NeuronConfig>
-    {
+    public class Neuron : AConfigurableOnAwake, IConfigurable, IUpdateble
+    {        
         private bool m_IsGrowing = false;
         private bool m_IsMoving = false;
 
@@ -22,7 +22,6 @@ namespace APP.Brain
         private float m_EnergyDefault = 50;
         private float m_EnergyMax = 100;
 
-
         [SerializeField] private float m_Speed;
         [Range(0, 2)] private float m_SpeedChangeRate = 1;
         private float m_SpeedDefault = 1;
@@ -37,7 +36,6 @@ namespace APP.Brain
         [SerializeField] private Axon m_Axon;
         [SerializeField] private List<Dendrite> m_Dendrites;
 
-        private GameObject m_GameObject;
         private Transform m_Transform;
         private SphereCollider m_Collider;
         private MeshRenderer m_Renderer;
@@ -46,8 +44,6 @@ namespace APP.Brain
         private Color m_ColorDefault = Color.white;
         private Color m_ColorHover = Color.green;
         
-        public NeuronConfig Config {get; private set; }
-
         public float Size { get => m_Size; private set => m_Size = value; }
         public float Energy  { get => m_Energy; private set => m_Energy = value; }
         public Vector3 Position { get => m_Transform.position; private set => m_Transform.position = value; }
@@ -55,41 +51,33 @@ namespace APP.Brain
 
         public event Action<Neuron> Divided;
         public event Action<Neuron> Dead;
-
-
         
-        public virtual void Setup(NeuronConfig config)
+        public override void Configure(params object[] args)
         {
-            Config = config;
+            var config = (NeuronConfig)args[PARAM_INDEX_Config];
+
             Size = config.Size;
             Energy = config.Energy;
             Position = config.Position;
-        
-        }
-        
-        public virtual void Configure(params object[] args)
-        {
-       
-            m_GameObject = gameObject;
+            
+            m_Transform = OnSceneObject.transform;
+            
 
-            if (m_GameObject.TryGetComponent<Transform>(out m_Transform) == false)
-                m_Transform = m_GameObject.AddComponent<Transform>();
-
-            if (m_GameObject.TryGetComponent<MeshRenderer>(out m_Renderer) == false)
+            if (OnSceneObject.TryGetComponent<MeshRenderer>(out m_Renderer) == false)
             {
-                m_Renderer = m_GameObject.AddComponent<MeshRenderer>();
+                m_Renderer = OnSceneObject.AddComponent<MeshRenderer>();
                 //m_Renderer.sprite = HandlerSprite.Circle;
             }
 
-            if (m_GameObject.TryGetComponent<SphereCollider>(out m_Collider) == false)
+            if (OnSceneObject.TryGetComponent<SphereCollider>(out m_Collider) == false)
             {
-                m_Collider = m_GameObject.AddComponent<SphereCollider>();
+                m_Collider = OnSceneObject.AddComponent<SphereCollider>();
                 //m_Collider.radius = m_NeuronSizeDefault / 2;
                 //m_Collider.offset = Vector2.zero;
             }
 
-            if (m_GameObject.TryGetComponent<Rigidbody>(out m_Rigidbody) == false)
-                m_Rigidbody = m_GameObject.AddComponent<Rigidbody>();
+            if (OnSceneObject.TryGetComponent<Rigidbody>(out m_Rigidbody) == false)
+                m_Rigidbody = OnSceneObject.AddComponent<Rigidbody>();
 
             var neuronPosition = transform.position;
 
@@ -108,12 +96,8 @@ namespace APP.Brain
                 var dendriteWidth = m_DendriteWidtDefault / m_DendriteNumbre;
 
                 m_Dendrites.Add(Dendrite.Get(dendriteHead, dendriteTail, dendriteWidth));
-
             }
         }
-
-        public virtual void Init() { }
-        public virtual void Dispose() { }
 
         private void EnergyCalculate()
         {
@@ -193,17 +177,7 @@ namespace APP.Brain
         }
 
 
-
-        private void Awake() =>
-            Configure();
-
-        private void OnEnable() =>
-            Init();
-
-        private void OnDisable() =>
-            Dispose();
-
-        private void Update()
+        public void Update()
         {
             EnergyCalculate();
             SizeCalculate();

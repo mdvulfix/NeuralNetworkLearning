@@ -10,26 +10,32 @@ namespace APP.Brain
         private List<Sensor> m_Sensors;
 
         public Dendrite() { }
-        public Dendrite(Vector3 head, Vector3 tail, float width) =>
-            Configure(head, tail, width);
+        public Dendrite(params object[] args) 
+            => Configure(args);
 
         public override void Configure(params object[] args)
         {
+            
+            
             base.Configure(args);
-            
-            m_Sensors = new List<Sensor>();
-            
         }
 
-        public virtual void Init() { }
+        public override void Init() 
+        {
+            m_Sensors = new List<Sensor>();
+            
+            base.Init();
+        }
         
         
-        public virtual void Dispose() 
+        public override void Dispose() 
         { 
             
             if(m_Sensors.Count > 0)
                 foreach (var sensor in m_Sensors)
                     sensor.Excited -= OnSensorExcited;
+
+            base.Dispose();
         }
 
         public void Attach(ISensible sensible)
@@ -37,7 +43,6 @@ namespace APP.Brain
             var sensor = Sensor.Get();
 
             sensor.Excited += OnSensorExcited;
-
             sensible.SetSensor(sensor);
         }
 
