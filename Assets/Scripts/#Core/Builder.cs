@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+using APP.Draw;
+
 namespace APP
 {
     public class Builder : AConfigurableOnAwake, IConfigurable, IUpdateble
@@ -33,9 +35,9 @@ namespace APP
             var updateControllerConfig = new UpdateControllerConfig();
             m_UpdateController = new UpdateController(updateControllerConfig);
             
-            var pictureControllerConfig = new PictureControllerConfig(m_BackgroundColor, m_HoverColor);
-            m_PictureController = new PictureController(pictureControllerConfig);
-            m_Picture = m_PictureController.Picture;
+            //var pictureControllerConfig = new PictureControllerConfig(m_BackgroundColor, m_HoverColor);
+            //m_PictureController = new PictureController(pictureControllerConfig);
+            //m_Picture = m_PictureController.Picture;
             
             var pencilControllerConfig = new PencilControllerConfig(m_BackgroundColor, m_DrawColor, m_PictureController);
             m_PencilController = new PencilController(pencilControllerConfig);

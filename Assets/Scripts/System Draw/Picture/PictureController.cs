@@ -3,23 +3,30 @@ using System.Collections;
 using UnityEngine;
 
 
-namespace APP
+namespace APP.Draw
 {
     [Serializable]
     public class PictureController: AConfigurable, IConfigurable
     {
        
-        [SerializeField] private int m_Widht = 50;
-        [SerializeField] private int m_Height = 50;
+        private Transform m_SceneRoot;
+        
+        [SerializeField] private int m_Widht = 10;
+        [SerializeField] private int m_Height = 10;
+
+        [SerializeField] private Picture m_Picture;
 
         private Color m_BackgroundColor = Color.black;
         private Color m_HoverColor = Color.grey;
         
-        public Picture Picture { get; private set; }
+        public Picture Picture  => m_Picture;
 
         public PictureController() { }
         public PictureController(params object[] args)
-            => Configure(args);
+        {
+            Configure(args);
+            Init();
+        }
         
         public override void Configure(params object[] args)
         {
@@ -29,6 +36,8 @@ namespace APP
             m_BackgroundColor = config.BackgroundColor;
             m_HoverColor = config.HoverColor;
 
+            m_SceneRoot = config.Root;
+
             
             base.Configure(args);
         }
@@ -36,13 +45,13 @@ namespace APP
         public override void Init()
         {
             
-            var pictureConfig = new PictureConfig(m_Widht, m_Height, m_BackgroundColor, m_HoverColor);
+            var pictureConfig = new PictureConfig(m_Widht, m_Height, m_BackgroundColor, m_HoverColor, m_SceneRoot);
             
             //TODO: Picture controller init
             //Picture = Picture.Get();
             //HandlerAsync.Execute(() => AwaitSceneObjectLoadingAsync(Picture));
             
-            Picture = new Picture(pictureConfig);
+            m_Picture = new Picture(pictureConfig);
 
             base.Init();
         }
@@ -59,14 +68,14 @@ namespace APP
         public void PixelColorize(Color color) =>
             PixelColorize(color, Picture.PixelActive);
         
-        public void PixelColorize(Color color, Pixel pixel) =>
+        public void PixelColorize(Color color, IPixel pixel) =>
             pixel.SetColor(color, ColorMode.Draw);
 
 
     
-        public IEnumerator AwaitLoadingAsync(IActivatable activatable, float awaiting = 5f)
+        public IEnumerator AwaitLoadingAsync(ILoadable activatable, float awaiting = 5f)
         {
-            while (activatable.IsActive == false && awaiting > 0)
+            while (activatable.IsActivated == false && awaiting > 0)
             {
                 yield return new WaitForSeconds(1);
                 awaiting -= Time.deltaTime;
@@ -78,13 +87,15 @@ namespace APP
 
     public struct PictureControllerConfig
     {
-        public PictureControllerConfig(Color backgroundColor, Color hoverColor)
+        public PictureControllerConfig(Color backgroundColor, Color hoverColor, Transform root)
         {
             BackgroundColor = backgroundColor;
             HoverColor = hoverColor;
+            Root = root;
         }
 
         public Color BackgroundColor { get; private set; }
         public Color HoverColor { get; private set; }
+        public Transform Root { get; internal set; }
     }
 }

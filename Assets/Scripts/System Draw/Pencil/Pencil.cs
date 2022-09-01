@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 
 
-namespace APP
+namespace APP.Draw
 {
     [Serializable]
     public class Pencil: AConfigurable, IConfigurable
@@ -15,8 +15,11 @@ namespace APP
 
         public Pencil() { }
         public Pencil(params object[] args)
-            => Configure(args);
-        
+        {
+            Configure(args);
+            Init();
+        }
+         
         public override void Configure(params object[] args)
         {
             var config = (PencilConfig)args[PARAM_INDEX_Config];

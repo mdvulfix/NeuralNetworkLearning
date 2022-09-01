@@ -6,7 +6,7 @@ using UnityEngine;
 namespace APP
 {
 
-    public abstract class AConfigurableOnAwake : MonoBehaviour, IMessager, IActivatable
+    public abstract class AConfigurableOnAwake : MonoBehaviour, IMessager, ILoadable
     {
 
         public static readonly int PARAM_INDEX_Config = 0;
@@ -16,21 +16,23 @@ namespace APP
 
         private IConfig m_Config;
         
-
         [SerializeField] private bool m_IsDebug = true;
         
+        
+        
+        [SerializeField] private bool m_IsLoaded;
         [SerializeField] private bool m_IsConfigured;
         [SerializeField] private bool m_IsInitialized;
-        [SerializeField] private bool m_IsActive;
-
-
+        [SerializeField] private bool m_IsActivated;
         
+
         public GameObject OnSceneObject => gameObject;
 
+    
         public bool IsConfigured => m_IsConfigured;
         public bool IsInitialized => m_IsInitialized;
-        public bool IsActive => m_IsActive;
-
+        public bool IsActivated => m_IsActivated;
+        public bool IsLoaded => m_IsActivated;
 
         public event Action Initialized;
         public event Action Disposed;
@@ -41,6 +43,7 @@ namespace APP
         // CONFIGURE //
         public virtual void Configure(params object[] args)
         {
+            
             if (args.Length > 0)
                 foreach (var arg in args)
                     if (arg is IConfig)
@@ -87,22 +90,34 @@ namespace APP
         }
 
         // LOAD & ACTIVATE //
+        public virtual void Load()
+        {
+            m_IsLoaded = true;
+            Send(($"{this.GetName()} {this.GetHashCode()} load status: {m_IsLoaded}"));
+        }
+
+        public virtual void Unload()
+        {
+            m_IsLoaded = false;
+            Send(($"{this.GetName()} {this.GetHashCode()} load status: {m_IsLoaded}"));
+        }
+        
         public virtual void Activate()
         {
             transform.SetParent(ROOT);
             transform.position = Vector3.zero;
 
-            m_IsActive = true;
-            gameObject.SetActive(m_IsActive);
+            m_IsActivated = true;
+            gameObject.SetActive(m_IsActivated);
 
-            ($"{this.GetName()} {this.GetHashCode()} active: {m_IsActive}").Send();
+            Send(($"{this.GetName()} {this.GetHashCode()} active status: {m_IsActivated}"));
 
         }
 
         public IEnumerator ActivateAsync(Action<bool> callback)
         {
             Activate();
-            callback.Invoke(m_IsActive);
+            callback.Invoke(m_IsActivated);
             yield return null;
         }
 
@@ -111,20 +126,21 @@ namespace APP
             transform.SetParent(ROOT_POOL);
             transform.position = Vector3.zero;
 
-            m_IsActive = false;
-            gameObject.SetActive(m_IsActive);
+            m_IsActivated = false;
+            gameObject.SetActive(m_IsActivated);
 
-            ($"{this.GetName()} {this.GetHashCode()} active: {m_IsActive}").Send();
+            Send(($"{this.GetName()} {this.GetHashCode()} active status: {m_IsActivated}"));;
         }
 
         public IEnumerator DeactivateAsync(Action<bool> callback)
         {
             Deactivate();
-            callback.Invoke(m_IsActive);
+            callback.Invoke(m_IsActivated);
             yield return null;
         }
 
-
+        
+        
         
         public IConfig GetConfig()
             => m_Config;
@@ -146,10 +162,10 @@ namespace APP
 
 
         // UNITY //
-        private void Awake()
+        private void Awake() 
             => Configure();
 
-        private void OnEnable()
+        private void OnEnable() 
             => Init();
 
         private void OnDisable()
@@ -159,12 +175,15 @@ namespace APP
 
 
 
-    public interface IActivatable
+    public interface ILoadable
     {
-        bool IsActive {get; }
+        bool IsActivated {get; }
+        bool IsLoaded {get; }
         
+        void Load();
         void Activate();
         void Deactivate();
+        void Unload();
     }
 
 }

@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace APP
 {
-    public class Factory<T> : Factory
+    public class Factory<T> : FactoryDefault
     where T : IConfigurable
     {
         public T Get(params object[] args)
@@ -16,17 +16,15 @@ namespace APP
     }
 
 
-    public class Factory : IFactory
-    {
-        private Dictionary<Type, IConstructor> m_Constractors;
 
-        public Factory()
+    public class FactoryDefault : FactoryModel, IFactory
+    {
+        public FactoryDefault()
         {
             m_Constractors = new Dictionary<Type, IConstructor>(15);
         }
 
-        public T Get<T>(params object[] args)
-        where T : IConfigurable
+        public override T Get<T>(params object[] args)
         {
             if (Get<T>(out var constructor))
                 return (T)constructor.Create<T>(args);
@@ -34,22 +32,29 @@ namespace APP
             return Create<T>(args);
         }
 
-        protected void Set<T>(IConstructor constructor)
-        {
-            try { m_Constractors.Add(typeof(T), constructor); }
-            catch (Exception exeption) { Debug.LogWarning($"The instance constructor is already added! Exeption: { exeption.Message }"); }
+    }
 
-        }
 
+    public abstract class FactoryModel
+    {
+        protected Dictionary<Type, IConstructor> m_Constractors;
+
+        public abstract T Get<T>(params object[] args)
+        where T : IConfigurable;
 
         protected bool Get<T>(out IConstructor constructor)
             => m_Constractors.TryGetValue(typeof(T), out constructor);
-    
+
+        protected void Set<T>(IConstructor constructor)
+        {
+            try { m_Constractors.Add(typeof(T), constructor); }
+            catch (Exception exeption) { Debug.LogWarning($"The instance constructor is already added! Exeption: {exeption.Message}"); }
+
+        }
+
         public static T Create<T>(params object[] args)
             => (T)Activator.CreateInstance(typeof(T), args);
-    
     }
-
 
 
     public interface IFactory

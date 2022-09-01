@@ -25,10 +25,10 @@ namespace APP
 
         public void Update()
         {
-            if (m_SetActive == true && m_Awaiter.IsActive == false)
+            if (m_SetActive == true && m_Awaiter.IsActivated == false)
                 Activate();
 
-            else if (m_SetActive == false && m_Awaiter.IsActive == true)
+            else if (m_SetActive == false && m_Awaiter.IsActivated == true)
                 Deactivate();
 
             else

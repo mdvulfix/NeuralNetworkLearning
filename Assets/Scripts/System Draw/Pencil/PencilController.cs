@@ -1,24 +1,27 @@
 using System;
 using UnityEngine;
+using UInput = UnityEngine.Input;
 
-
-namespace APP
+namespace APP.Draw
 {
     [Serializable]
     public class PencilController : AConfigurable, IConfigurable, IUpdateble
     {
-        private PencilControllerConfig m_Config;
 
         private Color m_ColorDraw = Color.green;
         private Color m_ColorClear = Color.black;
         private PictureController m_PictureController;
+        
+        [SerializeField] private Pencil m_Pencil;
 
-
-        public Pencil Pencil { get; private set; }
+        public Pencil Pencil  => m_Pencil;
 
         public PencilController() { }
         public PencilController(params object[] args)
-            => Configure(args);
+        {
+            Configure(args);
+            Init();
+        }
 
         public override void Configure(params object[] args)
         {
@@ -34,10 +37,8 @@ namespace APP
         public override void Init()
         {
             var pencilConfig = new PencilConfig(m_PictureController, m_ColorDraw, m_ColorClear);
-            Pencil = new Pencil(pencilConfig);
-             
-            UpdateController.SetUpdateble(this);
-
+            m_Pencil = new Pencil(pencilConfig);
+            
             base.Init();
         }
 
@@ -45,7 +46,6 @@ namespace APP
         public override void Dispose()
         {
             Pencil.Dispose();
-            UpdateController.RemoveUpdateble(this);
 
             base.Dispose();
         }
@@ -53,10 +53,10 @@ namespace APP
 
         public void Update()
         {
-            if (Input.GetMouseButton(0))
+            if (UInput.GetMouseButton(0))
                 Pencil.Draw();
 
-            if (Input.GetMouseButton(1))
+            if (UInput.GetMouseButton(1))
                 Pencil.Clear();
 
         }
