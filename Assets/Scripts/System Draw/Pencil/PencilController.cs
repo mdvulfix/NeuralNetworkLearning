@@ -5,7 +5,7 @@ using UInput = UnityEngine.Input;
 namespace APP.Draw
 {
     [Serializable]
-    public class PencilController : AConfigurable, IConfigurable, IUpdateble
+    public class PencilController : AConfigurable, IConfigurable //, IUpdateble
     {
 
         private Color m_ColorDraw = Color.green;
@@ -13,8 +13,6 @@ namespace APP.Draw
         private PictureController m_PictureController;
         
         [SerializeField] private Pencil m_Pencil;
-
-        public Pencil Pencil  => m_Pencil;
 
         public PencilController() { }
         public PencilController(params object[] args)
@@ -45,12 +43,18 @@ namespace APP.Draw
 
         public override void Dispose()
         {
-            Pencil.Dispose();
+            m_Pencil.Dispose();
 
             base.Dispose();
         }
 
+        public void Draw(IPixel pixel) 
+            => m_Pencil.Draw(pixel);
 
+        public void Clear(IPixel pixel) 
+            => m_Pencil.Clear(pixel);
+        
+        /*
         public void Update()
         {
             if (UInput.GetMouseButton(0))
@@ -60,6 +64,7 @@ namespace APP.Draw
                 Pencil.Clear();
 
         }
+        */
     }
 
     public struct PencilControllerConfig

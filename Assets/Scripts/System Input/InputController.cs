@@ -1,9 +1,8 @@
-using System.Collections;
-using System.Collections.Generic;
+using System;
 using UnityEngine;
 using UInput = UnityEngine.Input;
 using UCamera = UnityEngine.Camera;
-using System;
+
 
 namespace APP.Input
 {
@@ -15,14 +14,17 @@ namespace APP.Input
         private string m_SpriteLabel = "Default";
 
         private UCamera m_CameraMain;
-        
+
         [SerializeField] private CursorDefault m_Cursor;
 
-        private Selector m_Selector;
+        private int m_SelectableLayer;
 
         private ICursor Cursor => m_Cursor;
 
 
+        public event Action<ISelectable> Selected;
+        
+        
         public InputController() { }
         public InputController(params object[] args)
         {
@@ -43,56 +45,64 @@ namespace APP.Input
 
         public override void Init()
         {
+            m_SelectableLayer = 8;
+            
             var sprite = Resources.Load<Sprite>($"{FOLDER_SPRITES}/{m_SpriteLabel}");
             var color = Color.cyan;
             var cursorConfig = new CursorConfig(sprite, color, null);
 
             m_Cursor = CursorModel.Get<CursorDefault>();
-            
-            m_Cursor.PointSelected += OnPointSelected;
             m_Cursor.Configure(cursorConfig);
             m_Cursor.Init();
 
-            
-            
+
+
             base.Init();
         }
 
         public override void Dispose()
         {
             m_Cursor.Dispose();
-            
-            m_Cursor.PointSelected -= OnPointSelected;
 
-            
             base.Dispose();
         }
 
 
+        
+        
+        public void Update()
+        {
+            if (UInput.GetMouseButton(1))
+                HandleSelection(true);
+
+            if (UInput.GetMouseButtonUp(1))
+                HandleSelection(false);
+
+            m_Cursor.Follow(() => FollowPositionCalculate(UInput.mousePosition));
+            m_Cursor.Update();
+
+        }
+
+        private void HandleSelection(bool isSelecting)
+        {
+            if (isSelecting == true)
+            {
+                if (m_Cursor.Select(m_CameraMain, UInput.mousePosition, m_SelectableLayer, out var selectable))
+                    Selected?.Invoke(selectable);
+
+                m_Cursor.SetColor(Color.yellow);
+            }
+            else
+            {
+                m_Cursor.SetColor(Color.white);
+            }
+        }
+        
         private Vector3 FollowPositionCalculate(Vector3 position)
         {
             var newPosition = m_CameraMain.ScreenToWorldPoint(position);
             return new Vector3(newPosition.x, newPosition.y, -1);
         }
-
-
-        public void Update()
-        {
-            m_Cursor.Follow(()=> FollowPositionCalculate(UInput.mousePosition));
-            
-            if (UInput.GetMouseButton(1))
-                m_Cursor.SetColor(Color.yellow);
-                
-            if (UInput.GetMouseButtonUp(1))
-            {
-                m_Cursor.Select();
-                m_Cursor.SetColor(Color.white);
-            }
-
-            m_Cursor.Update();
-            
-        }
-
 
 
         private void OnPointSelected(Vector3 point)
@@ -104,7 +114,7 @@ namespace APP.Input
                 Send($"Hit {hit.GetName()}!");
             }
             */
-                
+
         }
     }
 
@@ -126,6 +136,13 @@ namespace APP.Input
 
 
     }
-
 }
 
+namespace APP
+{
+    public interface ISelectable
+    {
+
+    }
+
+}

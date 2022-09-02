@@ -1,38 +1,36 @@
 using System;
 using System.Collections;
 using UnityEngine;
-
+using SceneObject = UnityEngine.GameObject;
 
 namespace APP
 {
 
-    public abstract class AConfigurableOnAwake : MonoBehaviour, IMessager, ILoadable
+    public abstract class AConfigurableOnAwake : MonoBehaviour, IMessager
     {
 
         public static readonly int PARAM_INDEX_Config = 0;
         
-        private static Transform ROOT;
-        private static Transform ROOT_POOL;
+        //private static Transform ROOT;
+        //private static Transform ROOT_POOL;
 
         private IConfig m_Config;
         
         [SerializeField] private bool m_IsDebug = true;
         
         
-        
-        [SerializeField] private bool m_IsLoaded;
         [SerializeField] private bool m_IsConfigured;
         [SerializeField] private bool m_IsInitialized;
         [SerializeField] private bool m_IsActivated;
         
 
-        public GameObject OnSceneObject => gameObject;
+        public SceneObject SceneObject => gameObject;
 
     
         public bool IsConfigured => m_IsConfigured;
         public bool IsInitialized => m_IsInitialized;
         public bool IsActivated => m_IsActivated;
-        public bool IsLoaded => m_IsActivated;
+
 
         public event Action Initialized;
         public event Action Disposed;
@@ -89,6 +87,7 @@ namespace APP
             Send("Dispose completed!");
         }
 
+        /*
         // LOAD & ACTIVATE //
         public virtual void Load()
         {
@@ -101,12 +100,10 @@ namespace APP
             m_IsLoaded = false;
             Send(($"{this.GetName()} {this.GetHashCode()} load status: {m_IsLoaded}"));
         }
+        */
         
         public virtual void Activate()
         {
-            transform.SetParent(ROOT);
-            transform.position = Vector3.zero;
-
             m_IsActivated = true;
             gameObject.SetActive(m_IsActivated);
 
@@ -123,9 +120,6 @@ namespace APP
 
         public virtual void Deactivate()
         {
-            transform.SetParent(ROOT_POOL);
-            transform.position = Vector3.zero;
-
             m_IsActivated = false;
             gameObject.SetActive(m_IsActivated);
 
@@ -175,15 +169,12 @@ namespace APP
 
 
 
-    public interface ILoadable
+    public interface IActivable
     {
         bool IsActivated {get; }
-        bool IsLoaded {get; }
-        
-        void Load();
+
         void Activate();
         void Deactivate();
-        void Unload();
     }
 
 }

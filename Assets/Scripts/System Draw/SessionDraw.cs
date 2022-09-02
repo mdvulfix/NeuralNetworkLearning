@@ -1,9 +1,11 @@
+using System;
 using UnityEngine;
 using UCamera = UnityEngine.Camera;
 
+using APP.Draw;
 using APP.Input;
 
-namespace APP.Draw
+namespace APP
 {
     public class SessionDraw: AConfigurableOnAwake, IConfigurable, IUpdateble
     {
@@ -58,6 +60,7 @@ namespace APP.Draw
             
             var inputControllerConfig = new InputControllerConfig(m_CameraMain);
             m_InputController = new InputController(inputControllerConfig);
+            m_InputController.Selected += OnSelected;
             
             var pictureControllerConfig = new PictureControllerConfig(m_BackgroundColor, m_HoverColor, m_Scene);
             m_PictureController = new PictureController(pictureControllerConfig);
@@ -74,6 +77,8 @@ namespace APP.Draw
         {
             m_PencilController.Dispose();
             m_PictureController.Dispose();
+
+            m_InputController.Selected  -= OnSelected;
             m_InputController.Dispose();
         
             base.Dispose();
@@ -86,7 +91,20 @@ namespace APP.Draw
         public void Update()
         {
             m_InputController.Update();
-            m_PencilController.Update();
+            //m_PencilController.Update();
+        }
+
+
+        public void OnSelected(ISelectable selectable)
+        {
+            if(selectable is IPixel)
+            {
+                var pixel = (IPixel)selectable;
+                m_PencilController.Draw(pixel);
+
+            }
+
+
         }
     }
 }

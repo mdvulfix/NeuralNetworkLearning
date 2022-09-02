@@ -32,11 +32,11 @@ namespace APP.Draw
         }
 
 
-        public void Draw() =>
-            m_PictureController.PixelColorize(m_ColorDraw);
+        public void Draw(IPixel pixel) =>
+            m_PictureController.PixelColorize(pixel, m_ColorDraw);
 
-        public void Clear() =>
-            m_PictureController.PixelColorize(m_ColorClear);
+        public void Clear(IPixel pixel) =>
+            m_PictureController.PixelColorize(pixel, m_ColorClear);
     }
 
 

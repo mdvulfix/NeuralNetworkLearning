@@ -1,7 +1,10 @@
+using System;
 using UnityEngine;
 using UCamera = UnityEngine.Camera;
 
-namespace APP.Input
+using APP.Input;
+
+namespace APP
 {
     public class SessionInput: AConfigurableOnAwake, IConfigurable, IUpdateble
     {
@@ -31,12 +34,28 @@ namespace APP.Input
             var inputControllerConfig = new InputControllerConfig(m_CameraMain);
             m_InputController = new InputController(inputControllerConfig);
             
+            
             base.Init();
         }
+
+
+
+        public override void Dispose()
+        {
+            
+            m_InputController.Dispose();
+            
+            
+            base.Init();
+        }
+
 
         public void Update()
         {
             m_InputController.Update();
         }
+
+
+
     }
 }

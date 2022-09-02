@@ -8,6 +8,9 @@ namespace APP.Draw
 
     public class PixelDefault : PixelModel, IPixel
     {
+        private readonly string FOLDER_SPRITES = "Sprite";
+        private string m_SpriteLabel = "Square";
+        
         public PixelDefault() { }
         public PixelDefault(params object[] args)
         {
@@ -17,80 +20,115 @@ namespace APP.Draw
 
         public override void Configure(params object[] args)
         {
+            if(IsConfigured == true)
+                return;
+            
             if (args.Length > 0)
             {
                 base.Configure(args);
                 return;
             }
 
-            Send($"{this.GetName()} is not configured because of config not found!", LogFormat.Warning);
-            Send($"Configuration was aborted!", LogFormat.Warning);
+            var position = Vector3.zero;
+            var backgroundColor = Color.black;
+            var hoverColor = Color.grey;
+            var sprite = Resources.Load<Sprite>($"{FOLDER_SPRITES}/{m_SpriteLabel}");
+            var layerMask = 8;
+            
+            Transform parent = null;
+            if(Seacher.Find<IPicture>(out var picture))
+            {
+                parent = picture[0].SceneObject.transform != null ?
+                picture[0].SceneObject.transform:
+                SceneObject.transform.parent;
+            }
+                
+   
+            var pixelConfig = new PixelConfig(position, sprite, backgroundColor, hoverColor, layerMask, parent);
+            base.Configure(pixelConfig);
+            Send($"{ this.GetName() } was configured by default!");
         }
 
 
+        public override void Init()
+        {
+            if(IsInitialized == true)
+                return;
+            
+            
+            base.Init();
+        }
     }
 
 
 
     [Serializable]
-    public abstract class PixelModel : AConfigurable, IConfigurable, ISensible, IUpdateble, ILoadable
+    [RequireComponent(typeof(SpriteRenderer))]
+    [RequireComponent(typeof(BoxCollider2D))]
+    public abstract class PixelModel : AConfigurableOnAwake
     {
-        
-        private static IFactory m_Factory = new FactoryDefault();
-        
-        private GameObject m_GameObject;
         private Transform m_Transform;
+        private Transform m_Parent;
+        private Vector3 m_Position;
+        
         private BoxCollider2D m_Collider;
+        
         private SpriteRenderer m_Renderer;
-
-        [SerializeField] private bool m_IsLoaded;
-        [SerializeField] private bool m_IsActivated;
-
+        private Sprite m_Sprite;
         private Color m_ColorDefault = Color.black;
         private Color m_ColorHover = Color.grey;
 
+        private int m_LayerMask;
+        
 
         public Sensor Sensor { get; private set; }
-
-
-        public bool IsActivated => m_IsActivated;
-        public bool IsLoaded => m_IsLoaded;
 
 
         public override void Configure(params object[] args)
         {
             var config = (PixelConfig)args[PARAM_INDEX_Config];
 
-            //m_GameObject = OnSceneObject;
-            m_GameObject = new GameObject("Pixel");
-            m_Transform = m_GameObject.transform;
-
-            if (m_GameObject.TryGetComponent<SpriteRenderer>(out m_Renderer) == false)
-                m_Renderer = m_GameObject.AddComponent<SpriteRenderer>();
-
-            if (m_GameObject.TryGetComponent<BoxCollider2D>(out m_Collider) == false)
-            {
-                m_Collider = m_GameObject.AddComponent<BoxCollider2D>();
-                m_Collider.size = Vector2.one;
-                //m_Collider.offset = 0;
-            }
-
-
-            m_Renderer.sprite = config.Sprite;
-
+            m_Sprite = config.Sprite;
             m_ColorDefault = config.ColorDefault;
-            m_Renderer.color = m_ColorDefault;
-
             m_ColorHover = config.ColorHover;
 
-            m_Transform.position = config.Position;
-            m_Transform.parent = config.Parent.transform;
-            m_Transform.name = $"Pixel ({m_Transform.position.x.ToString()}; {m_Transform.position.y.ToString()})";
+            m_Position = config.Position;
+            m_Parent = config.Parent;
 
+            m_LayerMask = config.LayerMask;
+    
             base.Configure(args);
-
         }
 
+
+        public override void Init()
+        {
+            if (SceneObject.TryGetComponent<SpriteRenderer>(out m_Renderer) == false)
+                m_Renderer = SceneObject.AddComponent<SpriteRenderer>();
+
+            m_Renderer.sprite = m_Sprite;
+            m_Renderer.color = m_ColorDefault;
+
+            if (SceneObject.TryGetComponent<BoxCollider2D>(out m_Collider) == false)
+                m_Collider = SceneObject.AddComponent<BoxCollider2D>();
+            
+            m_Collider.size = Vector2.one;
+            //m_Collider.offset = 0;
+
+            
+            SceneObject.layer = m_LayerMask;
+
+            m_Transform = SceneObject.transform;
+            m_Transform.position = m_Position;
+            m_Transform.parent = m_Parent;
+            m_Transform.name = $"Pixel ({m_Position.x.ToString()}; {m_Position.y.ToString()})";
+
+            
+            if(m_Parent != null )
+                SceneObject.transform.SetParent(m_Parent);
+            
+            base.Init();
+        }
 
         public void SetColor() =>
             SetColor(m_ColorDefault);
@@ -122,44 +160,35 @@ namespace APP.Draw
 
         private void OnMouseOver()
         {
-            if (IsActivated == false)
-                Activate();
-
-
-
             SetColor(m_ColorHover);
         }
 
         private void OnMouseExit()
         {
-            if (IsActivated == false)
-                Activate();
-
             SetColor(m_ColorDefault);
         }
 
 
-
+        // FACTORY //
         public static TPixel Get<TPixel>(params object[] args)
-        where TPixel : IConfigurable
-            => Get<TPixel>(null, args);
-        
-        
-        public static TPixel Get<TPixel>(IFactory factory, params object[] args)
-        where TPixel : IConfigurable
+        where TPixel: Component, IPixel
         {
-            var pixelFactory = (factory == null) ? m_Factory : factory;
-            var pixel = pixelFactory.Get<TPixel>();
-            
-            
-            //var obj = new GameObject("Pixel");
-            //obj.SetActive(false);
-            //obj.transform.SetParent(ROOT_POOL);
+            var obj = new GameObject("Pixel");
+            obj.SetActive(false);
 
-            //var pixel = obj.AddComponent<TPixel>();
-            return pixel;
+            //var renderer = obj.AddComponent<MeshRenderer>();           
+            var instance = obj.AddComponent<TPixel>();
+            
+            if(args.Length > 0)
+            {
+                instance.Configure(args);
+                instance.Init();
+            }
+            
+            return instance;
         }
 
+        /*
         // LOAD & ACTIVATE //
         public virtual void Load()
         {
@@ -195,38 +224,14 @@ namespace APP.Draw
 
             Send(($"{this.GetName()} {this.GetHashCode()} active status: {m_IsActivated}"));;
         }
-
-        
-
-
-
-
-
-
-        /*
-        private void Awake()
-        {
-            
-            var folder = "Sprites";
-            var label = "box_white";
-            
-            var sprite = Resources.Load<Sprite>($"{folder}/{label}");
-            var pixelConfig = new PixelConfig(Vector3.zero, gameObject, sprite, Color.black, Color.gray);
-
-            Configure(pixelConfig);
-        }
         */
-
-
     }
 
 
 
-    public interface IPixel: IConfigurable, ILoadable, IUpdateble
+    public interface IPixel: IConfigurable, IUpdateble, IActivable, ISelectable, ISensible
     {
         void SetColor(Color color, ColorMode mode = ColorMode.None);
-        void SetSensor(Sensor sensor);
-
     }
 
 
@@ -234,18 +239,20 @@ namespace APP.Draw
     public struct PixelConfig
     {
         public Vector3 Position { get; private set; }
-        public GameObject Parent { get; private set; }
         public Sprite Sprite { get; private set; }
         public Color ColorDefault { get; private set; }
         public Color ColorHover { get; private set; }
+        public int LayerMask { get; }
+        public Transform Parent { get; private set; }
 
-        public PixelConfig(Vector3 position, GameObject parent, Sprite sprite, Color colorDefault, Color colorHover)
+        public PixelConfig(Vector3 position, Sprite sprite, Color colorDefault, Color colorHover, int layerMask,  Transform parent = null)
         {
-            Parent = parent;
             Sprite = sprite;
             ColorDefault = colorDefault;
             ColorHover = colorHover;
+            LayerMask = layerMask;
             Position = position;
+            Parent = parent;
         }
     }
 
@@ -254,4 +261,13 @@ namespace APP.Draw
         None,
         Draw
     }
+
+    public class PixelFactory : Factory<IPixel>
+    {
+        public PixelFactory()
+        {
+            Set<PixelDefault>(Constructor.Get((args) => PixelModel.Get<PixelDefault>(args)));
+        }
+    }
+
 }

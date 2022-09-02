@@ -8,10 +8,6 @@ namespace APP
 {
     public class Builder : AConfigurableOnAwake, IConfigurable, IUpdateble
     {
-                
-        [SerializeField] private Picture m_Picture;
-        [SerializeField] private Pencil m_Pencil;
-        
         [SerializeField] private PencilController m_PencilController;
         [SerializeField] private PictureController m_PictureController;
         
@@ -37,11 +33,10 @@ namespace APP
             
             //var pictureControllerConfig = new PictureControllerConfig(m_BackgroundColor, m_HoverColor);
             //m_PictureController = new PictureController(pictureControllerConfig);
-            //m_Picture = m_PictureController.Picture;
             
             var pencilControllerConfig = new PencilControllerConfig(m_BackgroundColor, m_DrawColor, m_PictureController);
             m_PencilController = new PencilController(pencilControllerConfig);
-            m_Pencil = m_PencilController.Pencil;
+
 
 
             base.Init();

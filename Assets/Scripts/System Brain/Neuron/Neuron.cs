@@ -60,24 +60,24 @@ namespace APP.Brain
             Energy = config.Energy;
             Position = config.Position;
             
-            m_Transform = OnSceneObject.transform;
+            m_Transform = SceneObject.transform;
             
 
-            if (OnSceneObject.TryGetComponent<MeshRenderer>(out m_Renderer) == false)
+            if (SceneObject.TryGetComponent<MeshRenderer>(out m_Renderer) == false)
             {
-                m_Renderer = OnSceneObject.AddComponent<MeshRenderer>();
+                m_Renderer = SceneObject.AddComponent<MeshRenderer>();
                 //m_Renderer.sprite = HandlerSprite.Circle;
             }
 
-            if (OnSceneObject.TryGetComponent<SphereCollider>(out m_Collider) == false)
+            if (SceneObject.TryGetComponent<SphereCollider>(out m_Collider) == false)
             {
-                m_Collider = OnSceneObject.AddComponent<SphereCollider>();
+                m_Collider = SceneObject.AddComponent<SphereCollider>();
                 //m_Collider.radius = m_NeuronSizeDefault / 2;
                 //m_Collider.offset = Vector2.zero;
             }
 
-            if (OnSceneObject.TryGetComponent<Rigidbody>(out m_Rigidbody) == false)
-                m_Rigidbody = OnSceneObject.AddComponent<Rigidbody>();
+            if (SceneObject.TryGetComponent<Rigidbody>(out m_Rigidbody) == false)
+                m_Rigidbody = SceneObject.AddComponent<Rigidbody>();
 
             var neuronPosition = transform.position;
 

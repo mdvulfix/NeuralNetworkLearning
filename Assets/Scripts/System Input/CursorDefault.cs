@@ -7,30 +7,29 @@ namespace APP.Input
     [Serializable]
     public class CursorDefault : CursorModel, ICursor
     {
-        public void Follow(Func<Vector3> getPositon) 
+        public void Follow(Func<Vector3> getPositon)
             => SetPosition(getPositon.Invoke());
-
 
     }
 
 
-    public abstract class CursorModel: AConfigurable, IConfigurable, IUpdateble
+    public abstract class CursorModel : AConfigurable, IConfigurable, IUpdateble
     {
         private static IFactory m_Factory = new FactoryDefault();
 
         private GameObject m_GameObject;
         private Transform m_Transform;
         private SpriteRenderer m_Renderer;
-        
+
         [SerializeField] private Vector3 m_Position;
 
+
         
-        public event Action<Vector3> PointSelected;
-        
+
         public override void Configure(params object[] args)
         {
-            var config = args.Length > 0 ? 
-            (CursorConfig)args[PARAM_INDEX_Config] : 
+            var config = args.Length > 0 ?
+            (CursorConfig)args[PARAM_INDEX_Config] :
             default(CursorConfig);
 
 
@@ -47,19 +46,36 @@ namespace APP.Input
 
             m_Transform.localPosition = Vector3.back;
             m_Transform.localScale = Vector3.one * 3;
-            
+
             m_Position = m_Transform.localPosition;
 
-            if(config.Parent != null)     
+            if (config.Parent != null)
                 m_Transform.parent = config.Parent.transform;
 
             base.Configure(args);
 
         }
 
-        public void Select()
+        public bool Select(Camera camera, Vector3 mousePosition, int targetLayer, out ISelectable selectable)
         {
-            PointSelected?.Invoke(m_Position);
+            selectable = null;
+            
+            var mousePositionInWorld = camera.ScreenToWorldPoint(mousePosition);
+            var worldPosition = new Vector3(mousePositionInWorld.x, mousePositionInWorld.y, -1);
+
+            var hit = Physics2D.Raycast(worldPosition, Vector3.forward, 100, targetLayer);
+            Debug.DrawLine(worldPosition, Vector3.forward * 100, Color.yellow);
+
+            if (hit == true)
+            {
+                if (hit.collider.TryGetComponent<ISelectable>(out selectable))
+                {
+                    Send($"Hit {hit.transform.name}!");
+                    return true;
+                }
+            }
+
+            return false;
         }
 
 
@@ -69,12 +85,12 @@ namespace APP.Input
         }
 
 
-        
+
         public void SetPosition(Vector3 position)
         {
-            if(m_Position == position)
+            if (m_Position == position)
                 return;
-            
+
             m_Position = position;
         }
 
@@ -86,17 +102,17 @@ namespace APP.Input
 
         private void HandlePosition()
         {
-            if(m_Position == m_Transform.position)
+            if (m_Position == m_Transform.position)
                 return;
-            
+
             m_Transform.position = m_Position;
         }
-        
+
         // FACTORY // 
         public static TCursor Get<TCursor>(params object[] args)
         where TCursor : IConfigurable
             => Get<TCursor>(null, args);
-        
+
         public static TCursor Get<TCursor>(IFactory factory, params object[] args)
         where TCursor : IConfigurable
         {
@@ -113,7 +129,7 @@ namespace APP.Input
             return cursor;
         }
 
-  
+
     }
 
     public class CursorConfig
@@ -135,6 +151,8 @@ namespace APP.Input
     {
 
     }
+
+
 
 
 }

@@ -50,7 +50,7 @@ namespace APP
 
         public override void Init()
         {
-            OnSceneObject.name = m_Label;
+            SceneObject.name = m_Label;
             
             base.Init();
         }
