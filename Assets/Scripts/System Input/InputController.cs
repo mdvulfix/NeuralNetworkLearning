@@ -22,9 +22,9 @@ namespace APP.Input
         private ICursor Cursor => m_Cursor;
 
 
-        public event Action<ISelectable> Selected;
-        
-        
+        public event Action<int, ISelectable> Selected;
+
+
         public InputController() { }
         public InputController(params object[] args)
         {
@@ -45,8 +45,8 @@ namespace APP.Input
 
         public override void Init()
         {
-            m_SelectableLayer = 8;
-            
+            m_SelectableLayer = (1 << 8);
+
             var sprite = Resources.Load<Sprite>($"{FOLDER_SPRITES}/{m_SpriteLabel}");
             var color = Color.cyan;
             var cursorConfig = new CursorConfig(sprite, color, null);
@@ -68,36 +68,61 @@ namespace APP.Input
         }
 
 
-        
-        
+
+
         public void Update()
         {
-            if (UInput.GetMouseButton(1))
-                HandleSelection(true);
+            HandleSelection();
 
-            if (UInput.GetMouseButtonUp(1))
-                HandleSelection(false);
+
+
+
 
             m_Cursor.Follow(() => FollowPositionCalculate(UInput.mousePosition));
             m_Cursor.Update();
 
         }
 
-        private void HandleSelection(bool isSelecting)
+        private void HandleSelection()
         {
+            int buttonIndex = -1;
+            bool isSelecting = false;
+
+            if (UInput.GetMouseButton(0))
+            {
+                isSelecting = true;
+                buttonIndex = 0;
+            }
+            else
+            if (UInput.GetMouseButton(1))
+            {
+                isSelecting = true;
+                buttonIndex = 1;
+            }
+            else
+            {
+                isSelecting = false;
+                buttonIndex = -1;
+            }
+
+
             if (isSelecting == true)
             {
                 if (m_Cursor.Select(m_CameraMain, UInput.mousePosition, m_SelectableLayer, out var selectable))
-                    Selected?.Invoke(selectable);
+                    Selected?.Invoke(buttonIndex, selectable);
 
-                m_Cursor.SetColor(Color.yellow);
+                if(buttonIndex ==0)
+                    m_Cursor.SetColor(Color.yellow);
+                else
+                if(buttonIndex ==1)
+                    m_Cursor.SetColor(Color.black);
             }
             else
             {
                 m_Cursor.SetColor(Color.white);
             }
         }
-        
+
         private Vector3 FollowPositionCalculate(Vector3 position)
         {
             var newPosition = m_CameraMain.ScreenToWorldPoint(position);

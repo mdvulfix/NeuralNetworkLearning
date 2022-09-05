@@ -5,16 +5,36 @@ using UnityEngine;
 
 namespace APP.Brain
 {
-    public class Brain : AConfigurableOnAwake, IConfigurable
+    
+    public class BrainDefault :  BrainModel, IBrain
+    {
+        public BrainDefault() { }
+        public BrainDefault(params object[] args)
+        {
+            Configure(args);
+            Init();
+        }
+
+        public override void Configure(params object[] args)
+        {
+            
+
+            base.Configure(args);
+        }
+    }
+    
+    
+        
+    public abstract class BrainModel : AConfigurable, IConfigurable
     {       
         private IRecognizable m_Recognizable;
         private IEnumerable<ISensible> m_Sensibles;
     
-        private List<Neuron> m_Neurons;
+        private List<INeuron> m_Neurons;
         private NeuronController m_NeuronController;
 
-        private Neuron[,,] m_LayerMatrixInput;
-        private Neuron[,,] m_LayerMatrixAnalize;
+        private INeuron[,,] m_LayerMatrixInput;
+        private INeuron[,,] m_LayerMatrixAnalize;
         
     
         private Vector3Int m_MatrixSize;
@@ -23,6 +43,8 @@ namespace APP.Brain
 
         public override void Configure(params object[] args)
         {
+            
+            
             var config = (BrainConfig)args[PARAM_INDEX_Config];
             m_Recognizable = config.Recognizable;
             
@@ -34,17 +56,35 @@ namespace APP.Brain
         {
             m_Sensibles = m_Recognizable.GetSensibles();
 
-            m_Neurons = new List<Neuron>();
-            m_MatrixSize = new Vector3Int(m_MatrixDimension, m_MatrixDimension, m_MatrixDimension);
-            m_LayerMatrixAnalize = new Neuron[m_MatrixSize.x, m_MatrixSize.y, m_MatrixSize.z];
+            m_Neurons = new List<INeuron>();
+            //m_MatrixSize = new Vector3Int(m_MatrixDimension, m_MatrixDimension, m_MatrixDimension);
+            //m_LayerMatrixAnalize = new Neuron[m_MatrixSize.x, m_MatrixSize.y, m_MatrixSize.z];
             
             // Build input layer
             
             var sensorNumber  = (from ISensible sensible in m_Sensibles select sensible).Count();
             
-            var inputLayerSize = new Vector3Int(sensorNumber/2, sensorNumber - sensorNumber/2, 0);
-            m_LayerMatrixInput = new Neuron[inputLayerSize.x, inputLayerSize.y, inputLayerSize.z];
+            //var inputLayerSize = new Vector3Int(sensorNumber/2, sensorNumber - sensorNumber/2, 0);
+            //m_LayerMatrixInput = new Neuron[inputLayerSize.x, inputLayerSize.y, inputLayerSize.z];
             
+            
+            foreach (var sensible in m_Sensibles)
+            {
+                var neuron = NeuronModel.Get<NeuronDefault>();
+
+                var neuronPosition = new Vector3(sensible.Position.x, sensible.Position.y, sensible.Position.z - 5);
+                var neuronSize = Random.Range(0f, 100f);
+                var neuronEnergy = Random.Range(0f, 100f);
+                var neuronConfig = new NeuronConfig(neuron, neuronSize, neuronEnergy, neuronPosition);
+                neuron.Configure(neuronConfig);
+                neuron.Init();
+                
+                var sensor = neuron.GetSensor();
+                sensible.SetSensor(sensor);
+            }
+            
+            
+            /*
             for (int z = 0; z < inputLayerSize.z; z++)
             { 
                 for (int y = 0; y < inputLayerSize.y; y++)
@@ -58,6 +98,7 @@ namespace APP.Brain
                     }
                 }
             }
+            */
             
             /*
             // Build analize layer
@@ -94,14 +135,13 @@ namespace APP.Brain
         }
 
 
-        private Neuron Clone(float size, float energy, Vector3 position)
+        private INeuron Clone(float size, float energy, Vector3 position)
         { 
-            var neuron = Neuron.Get();
+            var neuron = NeuronModel.Get<NeuronDefault>();
+            var neuronConfig = new NeuronConfig(neuron, size, energy, position);
 
             neuron.Divided += OnNeuronDivided;
             neuron.Dead += OnNeuronDead;
-
-            var neuronConfig = new NeuronConfig(size, energy, position);
             neuron.Configure(neuronConfig);
             neuron.Init();
 
@@ -109,16 +149,45 @@ namespace APP.Brain
         }
 
 
-        private void OnNeuronDivided(Neuron neuron)
+        private void OnNeuronDivided(INeuron neuron)
         { 
 
         }
 
-        private void OnNeuronDead(Neuron neuron)
+        private void OnNeuronDead(INeuron neuron)
         { 
             
         }
 
+
+        public static TBrain Get<TBrain>(params object[] args)
+        where TBrain: IBrain, new() //Component, IBrain
+        {
+            var obj = new GameObject("Brain");
+            obj.SetActive(false);
+
+            //var renderer = obj.AddComponent<MeshRenderer>();           
+            //var instance = obj.AddComponent<TBrain>();
+            var instance = new TBrain();
+            
+            if(args.Length > 0)
+            {
+                instance.Configure(args);
+                instance.Init();
+            }
+            
+            return instance;
+        }
+
+
+
+
+
+
+    }
+
+    public interface IBrain: IConfigurable
+    {
 
     }
 

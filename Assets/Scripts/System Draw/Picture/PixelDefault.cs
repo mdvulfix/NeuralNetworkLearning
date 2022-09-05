@@ -50,6 +50,7 @@ namespace APP.Draw
         }
 
 
+
         public override void Init()
         {
             if(IsInitialized == true)
@@ -57,6 +58,12 @@ namespace APP.Draw
             
             
             base.Init();
+        }
+
+
+        public void Excite()
+        {
+            
         }
     }
 
@@ -68,46 +75,43 @@ namespace APP.Draw
     public abstract class PixelModel : AConfigurableOnAwake
     {
         private Transform m_Transform;
-        private Transform m_Parent;
-        private Vector3 m_Position;
         
         private BoxCollider2D m_Collider;
         
         private SpriteRenderer m_Renderer;
-        private Sprite m_Sprite;
+
         private Color m_ColorDefault = Color.black;
         private Color m_ColorHover = Color.grey;
 
         private int m_LayerMask;
         
 
-        public Sensor Sensor { get; private set; }
+        public Vector3 Position { get => m_Transform.position; private set => m_Transform.position = value; }
 
 
         public override void Configure(params object[] args)
         {
             var config = (PixelConfig)args[PARAM_INDEX_Config];
 
-            m_Sprite = config.Sprite;
-            m_ColorDefault = config.ColorDefault;
-            m_ColorHover = config.ColorHover;
-
-            m_Position = config.Position;
-            m_Parent = config.Parent;
-
-            m_LayerMask = config.LayerMask;
-    
-            base.Configure(args);
-        }
+            m_Transform = SceneObject.transform;
+            m_Transform.name = $"Pixel ({config.Position.x.ToString()}; {config.Position.y.ToString()})";
 
 
-        public override void Init()
-        {
+            if(config.Parent != null )
+                SceneObject.transform.SetParent(config.Parent);
+            
+            Position = config.Position;
+            
+            SceneObject.layer = config.LayerMask;
+            
+
             if (SceneObject.TryGetComponent<SpriteRenderer>(out m_Renderer) == false)
                 m_Renderer = SceneObject.AddComponent<SpriteRenderer>();
 
-            m_Renderer.sprite = m_Sprite;
-            m_Renderer.color = m_ColorDefault;
+            m_Renderer.sprite = config.Sprite;
+            m_Renderer.color = config.ColorDefault;
+            m_ColorDefault = config.ColorDefault;
+            m_ColorHover = config.ColorHover;
 
             if (SceneObject.TryGetComponent<BoxCollider2D>(out m_Collider) == false)
                 m_Collider = SceneObject.AddComponent<BoxCollider2D>();
@@ -116,17 +120,14 @@ namespace APP.Draw
             //m_Collider.offset = 0;
 
             
-            SceneObject.layer = m_LayerMask;
 
-            m_Transform = SceneObject.transform;
-            m_Transform.position = m_Position;
-            m_Transform.parent = m_Parent;
-            m_Transform.name = $"Pixel ({m_Position.x.ToString()}; {m_Position.y.ToString()})";
+            base.Configure(args);
+        }
 
-            
-            if(m_Parent != null )
-                SceneObject.transform.SetParent(m_Parent);
-            
+
+        public override void Init()
+        {
+
             base.Init();
         }
 
@@ -143,12 +144,6 @@ namespace APP.Draw
 
             m_Renderer.color = color;
         }
-
-        public void SetSensor(Sensor sensor)
-        {
-            Sensor = sensor;
-        }
-
 
 
         public void Update()

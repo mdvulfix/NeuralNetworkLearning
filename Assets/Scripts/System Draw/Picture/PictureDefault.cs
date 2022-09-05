@@ -62,7 +62,7 @@ namespace APP.Draw
     }
 
     [Serializable]
-    public abstract class PictureModel : AConfigurableOnAwake //, IRecognizable
+    public abstract class PictureModel : AConfigurableOnAwake
     {
         private readonly string FOLDER_SPRITES = "Sprite";
         private string m_SpriteLabel = "Square";
@@ -165,8 +165,8 @@ namespace APP.Draw
         }
         
         
-        //public IEnumerable<ISensible> GetSensibles() =>
-        //    m_Pixels;
+        public IEnumerable<ISensible> GetSensibles() =>
+            m_Pixels;
 
         
         public static TPicture Get<TPicture>(params object[] args)
@@ -208,7 +208,7 @@ namespace APP.Draw
         public Transform Parent { get; internal set; }
     }
 
-    public interface IPicture: IConfigurable
+    public interface IPicture: IConfigurable, IRecognizable
     {
         SceneObject SceneObject {get; }
 

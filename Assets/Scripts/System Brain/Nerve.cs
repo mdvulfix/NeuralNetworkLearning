@@ -4,9 +4,9 @@ using UnityEngine;
 
 namespace APP.Brain
 {
+    
     [Serializable]
-    public abstract class Nerve<T>: AConfigurable, IConfigurable
-    where T : IConfigurable, new()
+    public abstract class NerveModel: AConfigurable
     {
         
         [SerializeField] private Vector3 m_Head;
@@ -27,6 +27,7 @@ namespace APP.Brain
             m_Tail = config.Tail;
             m_Width = config.Width;
 
+            
             base.Configure(args);
         }
 
@@ -46,13 +47,29 @@ namespace APP.Brain
         }
 
 
-        public static T Get(Vector3 head, Vector3 tail, float width)
+        public static TNerve Get<TNerve>(params object[] args)
+        where TNerve: INerve, new() //Component, IBrain
         {
-            var instance = new T();
-            instance.Configure(head, tail, width);
+            //var obj = new GameObject("Brain");
+            //obj.SetActive(false);
 
+            //var renderer = obj.AddComponent<MeshRenderer>();           
+            //var instance = obj.AddComponent<TBrain>();
+            var instance = new TNerve();
+            
+            if(args.Length > 0)
+            {
+                instance.Configure(args);
+                instance.Init();
+            }
+            
             return instance;
         }
+
+    }
+
+    public interface INerve: IConfigurable
+    {
 
     }
 

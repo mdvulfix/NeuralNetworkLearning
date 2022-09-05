@@ -21,11 +21,7 @@ namespace APP
         [SerializeField] private UpdateController m_UpdateController;
         [SerializeField] private AsyncController m_AsyncController;
         
-        
-        
-        
-        
-        
+            
         private Color m_BackgroundColor = Color.black;
         private Color m_HoverColor = Color.grey;
         private Color m_DrawColor = Color.green;
@@ -95,13 +91,15 @@ namespace APP
         }
 
 
-        public void OnSelected(ISelectable selectable)
+        public void OnSelected(int button, ISelectable selectable)
         {
             if(selectable is IPixel)
             {
                 var pixel = (IPixel)selectable;
-                m_PencilController.Draw(pixel);
-
+                if(button == 0)
+                    m_PencilController.Draw(pixel);
+                else if(button == 1)
+                    m_PencilController.Clear(pixel);
             }
 
 

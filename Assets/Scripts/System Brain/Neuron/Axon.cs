@@ -5,15 +5,14 @@ using UnityEngine;
 namespace APP.Brain
 {
     [Serializable]
-    public class Axon : Nerve<Axon>
+    public class Axon : NerveModel, IAxon
     {
-        private List<Branch> m_Branches;
-        private int m_BranchNumber = 1;
-        
-        
+
         public Axon() { }
         public Axon(params object[] args)
             => Configure(args);
+
+        public Vector3 Position {get; private set; }
 
         public override void Configure(params object[] args)
         {
@@ -22,23 +21,21 @@ namespace APP.Brain
             base.Configure(args);
         }
 
+        public void Excite()
+        {
+            
+        }
+
         public override void Init()
         {
-            m_Branches = new List<Branch>();
 
-            for (int i = 0; i < m_BranchNumber; i++)
-            {
-                var tailPosition = Tail;
-
-                var branchHead = tailPosition;
-                var branchTail = new Vector3(tailPosition.x - 1, tailPosition.y, tailPosition.z);
-                var branchWidth = Width / m_BranchNumber;
-                
-                
-                m_Branches.Add(Branch.Get(branchHead, branchTail, branchWidth));
-            }
             
             base.Init();
         }
+    }
+
+    public interface IAxon: INerve, ISensible
+    {
+        
     }
 }
