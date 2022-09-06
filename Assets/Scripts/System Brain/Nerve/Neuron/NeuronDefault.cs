@@ -1,11 +1,22 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using URandom = UnityEngine.Random;
 
 namespace APP.Brain
 {
+    
+    [Serializable]
+    [RequireComponent(typeof(MeshFilter))]
+    [RequireComponent(typeof(MeshRenderer))]
+    [RequireComponent(typeof(SphereCollider))]
+    //[RequireComponent(typeof(Rigidbody))]
     public abstract class NeuronModel : AConfigurableOnAwake, IConfigurable, IUpdateble
     {
+        
+        private readonly string FOLDER_MATERIAL = "Material";
+        private string m_MaterialLabel = "Neuron";
+        
         private INeuron m_Neuron;
 
         private bool m_IsGrowing = false;
@@ -32,19 +43,16 @@ namespace APP.Brain
         private float m_NeuronSizeDefault = 1f;
         private float m_DendriteWidtDefault = 0.5f;
 
-        private int m_DendriteNumbre = 1;
-
-        [SerializeField] private Axon m_Axon;
-
-        [SerializeField] private List<Dendrite> m_Dendrites;
+        [SerializeField] private IAxon m_Axon;
+        [SerializeField] private List<IDendrite> m_Dendrites;
 
         private Transform m_Transform;
-
-        private SphereCollider m_Collider;
+        private MeshFilter m_Filter;
         private MeshRenderer m_Renderer;
+        private SphereCollider m_Collider;
         private Rigidbody m_Rigidbody;
 
-        
+
         private Color m_ColorDefault = Color.white;
         private Color m_ColorHover = Color.green;
 
@@ -66,50 +74,56 @@ namespace APP.Brain
 
             Size = config.Size;
             Energy = config.Energy;
-            Position = config.Position;
 
             m_Transform = SceneObject.transform;
+            m_Transform.position = config.Position;
 
-
+            if (SceneObject.TryGetComponent<MeshFilter>(out m_Filter) == false)
+                m_Filter = SceneObject.AddComponent<MeshFilter>();
+            m_Filter.mesh = Resources.GetBuiltinResource<Mesh>("Sphere.fbx");
+            
+            
             if (SceneObject.TryGetComponent<MeshRenderer>(out m_Renderer) == false)
                 m_Renderer = SceneObject.AddComponent<MeshRenderer>();
-            //m_Renderer.sprite = HandlerSprite.Circle;
-            
+            m_Renderer.material = Resources.Load<Material>($"{FOLDER_MATERIAL}/{m_MaterialLabel}");
+
 
             if (SceneObject.TryGetComponent<SphereCollider>(out m_Collider) == false)
                 m_Collider = SceneObject.AddComponent<SphereCollider>();
-            //m_Collider.radius = m_NeuronSizeDefault / 2;
+            m_Collider.isTrigger = true;
             //m_Collider.offset = Vector2.zero;
 
+            //if (SceneObject.TryGetComponent<Rigidbody>(out m_Rigidbody) == false)
+            //   m_Rigidbody = SceneObject.AddComponent<Rigidbody>();
+            //m_Rigidbody.mass = 0f;
+            //m_Rigidbody.useGravity = false;
 
-            if (SceneObject.TryGetComponent<Rigidbody>(out m_Rigidbody) == false)
-                m_Rigidbody = SceneObject.AddComponent<Rigidbody>();
 
-            var neuronPosition = transform.position;
+            base.Configure(args);
 
-            var axonHead = neuronPosition;
-            var axonTail = new Vector3(neuronPosition.x - 1, neuronPosition.y, neuronPosition.z);
-            var axonWidth = m_NeuronSizeDefault / 2;
+        }
 
-            m_Axon = NerveModel.Get<Axon>(axonHead, axonTail, axonWidth);
+        public override void Init()
+        {
+            m_Axon = NerveModel.Get<Axon>();
+            var axonHead = m_Transform.position;
+            var axonTail = new Vector3(m_Transform.position.x - 1, m_Transform.position.y, m_Transform.position.z);
+            var axonWidth = m_NeuronSizeDefault;
+            var axonConfig = new NerveConfig(m_Axon, axonHead, axonTail, axonWidth);
+            m_Axon.Configure(axonConfig);
+            m_Axon.Init();
 
-            m_Dendrites = new List<Dendrite>();
+            m_Dendrites = new List<IDendrite>();
+            m_Dendrites.Add(GrowDendrite());
 
-            for (int i = 0; i < m_DendriteNumbre; i++)
-            {
-                var dendriteHead = neuronPosition;
-                var dendriteTail = new Vector3(neuronPosition.x - 1, neuronPosition.y, neuronPosition.z);
-                var dendriteWidth = m_DendriteWidtDefault / m_DendriteNumbre;
-
-                m_Dendrites.Add(NerveModel.Get<Dendrite>(dendriteHead, dendriteTail, dendriteWidth));
-            }
+            base.Init();
         }
 
 
         public ISensor GetSensor()
         {
             ISensor sensor = null;
-            
+
             foreach (var dendrite in m_Dendrites)
             {
                 if (dendrite.GetSensor(out sensor))
@@ -183,7 +197,7 @@ namespace APP.Brain
 
         private void MoveCalculate()
         {
-            m_Rigidbody.velocity = (m_Direction * m_Speed) * Time.deltaTime;
+            //m_Rigidbody.velocity = (m_Direction * m_Speed) * Time.deltaTime;
         }
 
 
@@ -203,13 +217,17 @@ namespace APP.Brain
 
         private IDendrite GrowDendrite()
         {
+            var dendrite = NerveModel.Get<Dendrite>();
 
-            var dendriteHead = neuronPosition;
-            var dendriteTail = new Vector3(neuronPosition.x - 1, neuronPosition.y, neuronPosition.z);
-            var dendriteWidth = m_DendriteWidtDefault / m_DendriteNumbre;
+            var dendriteHead = m_Transform.position;
+            var dendriteTail = new Vector3(m_Transform.position.x + 1, m_Transform.position.y, m_Transform.position.z);
+            var dendriteWidth = m_NeuronSizeDefault;
+            var dendriteConfig = new NerveConfig(dendrite, dendriteHead, dendriteTail, dendriteWidth);
 
-            m_Dendrites.Add(Dendrite.Get(dendriteHead, dendriteTail, dendriteWidth));
-
+            dendrite.Configure(dendriteConfig);
+            dendrite.Init();
+            
+            return dendrite;
         }
 
 
@@ -255,18 +273,30 @@ namespace APP.Brain
 
         public override void Configure(params object[] args)
         {
+            if (IsConfigured == true)
+                return;
 
+            if (args.Length > 0)
+            {
+                base.Configure(args);
+                return;
+            }
 
-            base.Configure(args);
+            var position = Vector3.zero;
+            var size = URandom.Range(0f, 100f);
+            var energy = URandom.Range(0f, 100f);
+            var config = new NeuronConfig(this, size, energy, position);
+
+            base.Configure(config);
+            Send($"{this.GetName()} was configured by default!");
         }
-
-
     }
 
 
     public interface INeuron : IConfigurable
     {
-
+        event Action<INeuron> Divided;
+        event Action<INeuron> Dead;
     }
 
     public struct NeuronConfig : IConfig

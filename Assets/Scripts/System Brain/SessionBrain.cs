@@ -19,12 +19,17 @@ namespace APP
 
         public override void Configure(params object[] args)
         {
-        
-            
+            if (IsConfigured == true)
+                return;
+
+            if (args.Length > 0)
+            {
+                base.Configure(args);
+                return;
+            }
                 
-            
-            
-            base.Configure(args);
+            var config = new SessionConfig();
+            base.Configure(config);
         }
 
 
@@ -32,12 +37,26 @@ namespace APP
         {
             m_SceneRootData = new SceneRootData(m_Scene);
             
-            var brainConfig = new BrainConfig(m_Picture);
             m_Brain = BrainModel.Get<BrainDefault>();
-            m_Brain.Configure();
+            
+            //TODO: Add picture!
+            m_Picture = null;
+            
+            var brainConfig = new BrainConfig(m_Brain, m_Picture);
+            
+            m_Brain.Configure(brainConfig);
             m_Brain.Init();
 
             base.Init();
+        }
+
+
+        public override void Dispose()
+        {
+            
+            m_Brain.Dispose();
+            
+            base.Dispose();
         }
 
 

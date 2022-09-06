@@ -80,7 +80,7 @@ namespace APP.Brain
                 neuron.Init();
                 
                 var sensor = neuron.GetSensor();
-                sensible.SetSensor(sensor);
+                sensor.Attach(sensible);
             }
             
             
@@ -193,11 +193,13 @@ namespace APP.Brain
 
     public struct BrainConfig: IConfig
     {
-        public BrainConfig(IRecognizable recognizable)
+        public BrainConfig(IBrain brain, IRecognizable recognizable)
         {
+            Brain = brain;
             Recognizable = recognizable;
         }
 
+        public IBrain Brain { get; private set;}
         public IRecognizable Recognizable { get; private set; }
     }
 

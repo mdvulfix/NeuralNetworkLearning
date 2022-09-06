@@ -13,7 +13,10 @@ namespace APP.Brain
         
         public Dendrite() { }
         public Dendrite(params object[] args)
-            => Configure(args);
+        {
+            Configure(args);
+            Init();
+        }
 
         public override void Configure(params object[] args)
         {
@@ -68,8 +71,12 @@ namespace APP.Brain
         private ISensor GrowSensor()
         {
             var sensor = NerveModel.Get<Sensor>();
-            var sensorConfig = new SensorConfig(sensor);
             
+            var sensorHead = Head;
+            var sensorTail = new Vector3(Head.x + 1, Head.y, Head.z);
+            var sensorWidth = Width;
+            var sensorConfig = new NerveConfig(sensor, sensorHead, sensorTail, sensorWidth);
+                        
             sensor.Excited += OnSensorExcited;
             sensor.Configure(sensorConfig);
             sensor.Init();

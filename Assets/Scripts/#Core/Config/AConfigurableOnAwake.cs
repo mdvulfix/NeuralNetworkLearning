@@ -41,7 +41,6 @@ namespace APP
         // CONFIGURE //
         public virtual void Configure(params object[] args)
         {
-            
             if (args.Length > 0)
                 foreach (var arg in args)
                     if (arg is IConfig)

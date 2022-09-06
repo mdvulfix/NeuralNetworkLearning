@@ -7,7 +7,7 @@ namespace APP.Brain
     {
 
         [SerializeField] private float m_Energy;
-        private float m_EnergyDefault = 0.1f;
+        private float m_EnergyDefault = 100f;
 
         public float Energy => m_Energy;
         //private float m_Lifetime = 100;

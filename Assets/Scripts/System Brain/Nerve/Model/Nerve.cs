@@ -8,6 +8,8 @@ namespace APP.Brain
     [Serializable]
     public abstract class NerveModel: AConfigurable
     {
+        private INerve m_Nerve;
+        
         
         [SerializeField] private Vector3 m_Head;
         [SerializeField] private Vector3 m_Tail;
@@ -22,6 +24,8 @@ namespace APP.Brain
         public override void Configure(params object[] args)
         {
             var config = (NerveConfig)args[PARAM_INDEX_Config];
+            
+            m_Nerve = config.Nerve;
             
             m_Head = config.Head;
             m_Tail = config.Tail;
@@ -75,15 +79,19 @@ namespace APP.Brain
 
     public class NerveConfig
     {
-        public NerveConfig(Vector3 head, Vector3 tail, float width)
+        public NerveConfig(INerve nerve, Vector3 head, Vector3 tail, float width)
         {
             Head = head;
             Tail = tail;
             Width = width;
+            Nerve = nerve;
         }
 
-        public Vector3 Head { get; internal set; }
-        public Vector3 Tail { get; internal set; }
-        public float Width { get; internal set; }
+
+        public INerve Nerve { get; private set; }
+        public Vector3 Head { get; private set; }
+        public Vector3 Tail { get; private set; }
+        public float Width { get; private set; }
+        
     }
 }

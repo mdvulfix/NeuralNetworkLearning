@@ -21,11 +21,9 @@ namespace APP.Brain
         public event Action<Сharge> Excited;
 
 
-
-        public override void Configure(params object[] args)
+        public void Attach(ISensible sensible)
         {
-            var config = (SensorConfig)args[PARAM_INDEX_Config];
-
+            Sensible = sensible;
         }
 
 
@@ -50,6 +48,9 @@ namespace APP.Brain
         ISensible Sensible {get; }
         
         event Action<Сharge> Excited;
+    
+        void Attach(ISensible sensible);
+    
     }
 
     public interface ISensible
