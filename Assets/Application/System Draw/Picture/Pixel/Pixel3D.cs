@@ -31,7 +31,7 @@ namespace APP.Draw
             if (obj.TryGetComponent<MeshRenderer>(out m_Renderer) == false)
                 m_Renderer = obj.AddComponent<MeshRenderer>();
 
-            m_Renderer.sharedMaterial.color = backgroundColor;
+            m_Renderer.material.SetColor("_Color", backgroundColor);
 
             if (obj.TryGetComponent<BoxCollider>(out m_Collider) == false)
                 m_Collider = obj.AddComponent<BoxCollider>();
@@ -80,7 +80,7 @@ namespace APP.Draw
             if (m_Renderer.sharedMaterial.color == color)
                 return;
 
-            m_Renderer.sharedMaterial.color = color;
+            m_Renderer.material.SetColor("_Color", color);
             base.SetColor(color, mode);
         }
         

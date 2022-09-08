@@ -9,7 +9,6 @@ namespace APP
 {
     public class SessionDraw: AConfigurableOnAwake, IConfigurable, IUpdateble
     {
-
         [SerializeField] private Transform m_Scene;
         [SerializeField] private UCamera m_CameraMain;
         

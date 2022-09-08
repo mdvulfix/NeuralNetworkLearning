@@ -8,10 +8,8 @@ namespace APP.Draw
     [Serializable]
     public abstract class PixelModel : AConfigurableOnAwake
     {        
-        
         private int m_LayerMask;
         
-
         public Color ColorDefault {get; private set; } = Color.black;
         public Color ColorHover {get; private set; } = Color.grey;
         
@@ -64,7 +62,7 @@ namespace APP.Draw
         }
 
 
-
+        /*
         private void OnMouseOver()
         {
             SetColor(ColorHover);
@@ -74,7 +72,7 @@ namespace APP.Draw
         {
             SetColor(ColorDefault);
         }
-
+        */
 
         // FACTORY //
         public static TPixel Get<TPixel>(params object[] args)

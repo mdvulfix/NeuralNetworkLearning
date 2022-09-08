@@ -63,11 +63,11 @@ namespace APP.Input
             var mousePositionInWorld = camera.ScreenToWorldPoint(mousePosition);
             var worldPosition = new Vector3(mousePositionInWorld.x, mousePositionInWorld.y, -1);
 
-            var hit = Physics2D.Raycast(worldPosition, Vector3.forward, 100, targetLayer);
-            Debug.DrawLine(worldPosition, Vector3.forward * 100, Color.yellow);
+            //var hit = Physics2D.Raycast(worldPosition, Vector3.forward, 100, targetLayer);
 
-            if (hit == true)
+            if (Physics.Raycast(worldPosition, Vector3.forward, out var hit, 100, targetLayer))
             {
+                Debug.DrawLine(worldPosition, Vector3.forward * 100, Color.yellow);
                 if (hit.collider.TryGetComponent<ISelectable>(out selectable))
                 {
                     Send($"Hit {hit.transform.name}!");
