@@ -76,7 +76,6 @@ namespace APP
         public virtual void Dispose()
         { 
 
-
             m_IsInitialized = false;
             Disposed?.Invoke();
             Send("Dispose completed!");

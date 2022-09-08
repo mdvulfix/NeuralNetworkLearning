@@ -44,13 +44,14 @@ namespace APP.Draw
             base.Dispose();
         }
 
+        /*
         public void Draw(IPixel pixel) 
             => m_Pencil.Draw(pixel);
 
         public void Clear(IPixel pixel) 
             => m_Pencil.Clear(pixel);
 
-        
+        */
         public static PencilController Get(params object[] args)
             => Get<PencilController>(args);
 

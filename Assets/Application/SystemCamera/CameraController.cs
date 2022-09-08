@@ -47,7 +47,7 @@ namespace APP
                 if(hit.collider.TryGetComponent<IPixel>(out var pixel))
                 {
                     Debug.Log($"Hit pixel { pixel.GetName() }! Layer: {hit.collider.gameObject.layer }");
-                    pixel.SetColor(color, ColorMode.Draw);
+                    //pixel.SetColor(color, ColorMode.Draw);
                 }
                     
             }

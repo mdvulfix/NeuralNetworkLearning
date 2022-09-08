@@ -25,11 +25,13 @@ namespace APP.Draw
             base.Configure(args);
         }
 
+        /*
         public void Clear(IPixel pixel) =>
             m_PictureController.Colorize(pixel, m_ColorClear);
 
         public void Draw(IPixel pixel) =>
             m_PictureController.Colorize(pixel, m_ColorDraw);
+        */
 
         // FACTORY //
         public static TPencil Get<TPencil>(params object[] args)
@@ -66,8 +68,8 @@ namespace APP.Draw
 
     public interface IPencil : IConfigurable
     {
-        void Clear(IPixel pixel);
-        void Draw(IPixel pixel);
+        //void Clear(IPixel pixel);
+        //void Draw(IPixel pixel);
     }
 
     public struct PencilConfig

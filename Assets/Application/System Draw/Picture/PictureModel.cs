@@ -9,11 +9,8 @@ namespace APP.Draw
 {
     [Serializable]
     public abstract class PictureModel<TPixel> : AConfigurable
-    where TPixel: Component, IPixel
+    where TPixel: IPixel
     {
-
-        
-
         [SerializeField] private int m_Width;
         [SerializeField] private int m_Height;
 
@@ -65,8 +62,8 @@ namespace APP.Draw
                 {
                     var position = new Vector3(x - m_Width / 2, y - m_Height / 2);
                     
-                    var pixelConfig = new PixelConfig(position, m_BackgroundColor, m_HoverColor, m_LayerMask, Picture);
                     var pixel = PixelModel.Get<TPixel>();
+                    var pixelConfig = new PixelConfig(pixel, position, m_BackgroundColor, m_HoverColor, m_LayerMask, Picture);
                     
                     pixel.Configure(pixelConfig);
                     pixel.Init();
@@ -86,14 +83,8 @@ namespace APP.Draw
         
         public override void Dispose()
         {
-
             foreach (var pixel in m_Pixels)
-            {
-                pixel.Deactivate();
                 pixel.Dispose();
-            }
-                
-
 
             m_Pixels.Clear();
 

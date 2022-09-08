@@ -14,6 +14,9 @@ namespace APP.Draw
         private Color m_BackgroundColor = Color.black;
         private Color m_HoverColor = Color.grey;
         
+        public IPixel PixelSelected { get; private set; }
+        public IPixel PixelHovered { get; private set; }
+        
         
         public PictureController() { }
         public PictureController(params object[] args)
@@ -43,11 +46,10 @@ namespace APP.Draw
         //public void PixelColorize(Color color) =>
         //    PixelColorize(color, Picture.PixelActive);
         
-        public void Colorize(IPixel pixel, Color color) =>
-            pixel.SetColor(color, ColorMode.Draw);
+        //public void Colorize(IPixel pixel, Color color, ColorMode mode = ColorMode.None) =>
+        //    pixel.SetColor(color);
 
 
-    
         public IEnumerator AwaitLoadingAsync(IActivable activatable, float awaiting = 5f)
         {
             while (activatable.IsActivated == false && awaiting > 0)
@@ -60,11 +62,15 @@ namespace APP.Draw
         public static PictureController Get(params object[] args)
             => Get<PictureController>(args);
 
+
     }
 
     public interface IPictureController : IController
     {
-        void Colorize(IPixel pixel, Color color);
+        IPixel PixelSelected { get; }
+        IPixel PixelHovered { get; }
+        
+        //void Colorize(IPixel pixel, Color color, ColorMode mode = ColorMode.None);
     }
 
     public struct PictureControllerConfig

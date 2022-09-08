@@ -56,7 +56,7 @@ namespace APP
         public override void Init()
         {
             m_InputController = InputController.Get(new InputControllerConfig(m_CameraMain));
-            m_InputController.Selected += OnSelected;
+            //m_InputController.Selected += OnSelected;
             m_InputController.Init();
             
 
@@ -79,7 +79,7 @@ namespace APP
             m_PencilController.Dispose();
             m_PictureController.Dispose();
 
-            m_InputController.Selected  -= OnSelected;
+            //m_InputController.Selected  -= OnSelected;
             m_InputController.Dispose();
         
             base.Dispose();
@@ -95,9 +95,10 @@ namespace APP
             //m_PencilController.Update();
         }
 
-
-        public void OnSelected(int button, ISelectable selectable)
+        /*
+        public void OnSelected(ISelectable selectable, int button)
         {
+
             if(selectable is IPixel)
             {
                 var pixel = (IPixel)selectable;
@@ -106,8 +107,19 @@ namespace APP
                 else if(button == 1)
                     m_PencilController.Clear(pixel);
             }
-
-
         }
+
+        public void OnHovered(ISelectable selectable)
+        {
+            m_PictureController.OnHovered(selectable);
+            
+            if(selectable is IPixel)
+            {
+                
+                
+            
+            }
+        }
+        */
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UInput = UnityEngine.Input;
 using UCamera = UnityEngine.Camera;
@@ -10,19 +11,21 @@ namespace APP.Input
     public class InputController : AController, IController, IUpdateble
     {
 
-        private readonly string FOLDER_SPRITES = "Sprite/Cursor";
-        private string m_SpriteLabel = "Default";
-
         private UCamera m_CameraMain;
-
-        [SerializeField] private CursorDefault m_Cursor;
 
         private int m_SelectableLayer;
 
-        private ICursor Cursor => m_Cursor;
+        private List<ISelectable> m_IsSelected;
+        private ISelectable m_IsHovered;
+
+        private Color m_PointerColorDefault;
+        private Color m_PointerColorSelected;
+        private Color m_PointerColorUnselected;
+
+        private Vector3 m_PointPosition;
 
 
-        public event Action<int, ISelectable> Selected;
+        public IPointer Pointer { get; private set; }
 
 
         public InputController() { }
@@ -43,24 +46,28 @@ namespace APP.Input
 
         public override void Init()
         {
+            m_IsSelected = new List<ISelectable>(100);
+
+            m_PointerColorDefault = Color.cyan;
+            m_PointerColorSelected = Color.green;
+            m_PointerColorUnselected = Color.black;
+
             m_SelectableLayer = (1 << 8);
 
-            var sprite = Resources.Load<Sprite>($"{FOLDER_SPRITES}/{m_SpriteLabel}");
-            var color = Color.cyan;
-            var cursorConfig = new CursorConfig(sprite, color, null);
+            Pointer = PointerModel.Get<PointerDefault>();
 
-            m_Cursor = CursorModel.Get<CursorDefault>();
-            m_Cursor.Configure(cursorConfig);
-            m_Cursor.Init();
+            var pointerConfig = new PointerConfig(Pointer, m_PointerColorDefault, m_SelectableLayer);
 
-
+            Pointer.Configure(pointerConfig);
+            Pointer.Init();
+            Pointer.Activate();
 
             base.Init();
         }
 
         public override void Dispose()
         {
-            m_Cursor.Dispose();
+            Pointer.Dispose();
 
             base.Dispose();
         }
@@ -70,80 +77,96 @@ namespace APP.Input
 
         public void Update()
         {
-            HandleSelection();
+            PointerFollowMousePosition(m_CameraMain, UInput.mousePosition);
+            HandleHover();
+            HandleSelect();
+        }
 
-            m_Cursor.Follow(() => FollowPositionCalculate(UInput.mousePosition));
-            m_Cursor.Update();
+        public void FixedUpdate()
+        {
 
         }
 
 
-
-
-        private void HandleSelection()
+        private void HandleHover()
         {
-            int buttonIndex = -1;
-            bool isSelecting = false;
+            if (GetSelectable(m_SelectableLayer, out var selectable))
+            {
+                if (m_IsHovered != null && m_IsHovered != selectable)
+                {
+                    m_IsHovered.OnHovered(false);
+                    m_IsHovered = selectable;
+                    m_IsHovered.OnHovered(true);
+                }
+            }
+        }
 
+        private void HandleSelect()
+        {
+            
             if (UInput.GetMouseButton(0))
             {
-                isSelecting = true;
-                buttonIndex = 0;
+                Pointer.SetColor(m_PointerColorSelected);
+
+                if (GetSelectable(m_SelectableLayer, out var selectable))
+                {
+                    if (m_IsSelected.Contains(selectable) == false)
+                    {
+                        selectable.OnSelected(true);
+                        m_IsSelected.Add(selectable);
+                    }
+                }
             }
             else
             if (UInput.GetMouseButton(1))
             {
-                isSelecting = true;
-                buttonIndex = 1;
+                Pointer.SetColor(m_PointerColorUnselected);
+
+                if (GetSelectable(m_SelectableLayer, out var selectable))
+                {
+                    if (m_IsSelected.Contains(selectable) == true)
+                    {
+                        m_IsSelected.Remove(selectable);
+                        selectable.OnSelected(false);
+                    }
+                }
             }
             else
             {
-                isSelecting = false;
-                buttonIndex = -1;
-            }
-
-
-            if (isSelecting == true)
-            {
-                if (m_Cursor.Select(m_CameraMain, UInput.mousePosition, m_SelectableLayer, out var selectable))
-                    Selected?.Invoke(buttonIndex, selectable);
-
-                if(buttonIndex ==0)
-                    m_Cursor.SetColor(Color.yellow);
-                else
-                if(buttonIndex ==1)
-                    m_Cursor.SetColor(Color.black);
-            }
-            else
-            {
-                m_Cursor.SetColor(Color.white);
+                Pointer.SetColor(m_PointerColorDefault);
             }
         }
 
-        private Vector3 FollowPositionCalculate(Vector3 position)
+
+        private void PointerFollowMousePosition(Camera camera, Vector3 mousePosition)
         {
-            var newPosition = m_CameraMain.ScreenToWorldPoint(position);
-            return new Vector3(newPosition.x, newPosition.y, -1);
+            var position = camera.ScreenToWorldPoint(mousePosition);
+            position = new Vector3(position.x, position.y, -1);
+            Pointer.SetPosition(position);
         }
 
-
-        private void OnPointSelected(Vector3 point)
+        private bool GetSelectable(int targetLayer, out ISelectable selectable)
         {
-            /*
-            if (Physics2D.Raycast(point, Vector3.forward))
-            {
-                Debug.DrawLine(point, Vector3.forward * 100, Color.yellow);
-                Send($"Hit {hit.GetName()}!");
-            }
-            */
+            selectable = null;
 
+            if (Physics.Raycast(Pointer.Position, Vector3.forward, out var hit, 100, targetLayer))
+            {
+                if (hit.collider.TryGetComponent<ISelectable>(out selectable))
+                {
+                    Send($"Hit {hit.transform.name}!");
+                    return true;
+                }
+            }
+
+            return false;
         }
-    
-    
-    
+
+
+
+
         public static InputController Get(params object[] args)
             => Get<InputController>(args);
-    
+
     }
 
     public class InputControllerConfig
@@ -170,7 +193,8 @@ namespace APP
 {
     public interface ISelectable
     {
-
+        void OnSelected(bool selected);
+        void OnHovered(bool hovered);
     }
 
 }
