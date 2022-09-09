@@ -3,71 +3,42 @@ using UnityEngine;
 
 namespace APP
 {
-    public abstract class AConfigurable : IMessager
+    public abstract class ModelConfigurable : IConfigurable, IMessager
     {
-        public static readonly int PARAM_INDEX_Config = 0;
-
-        private IConfig m_Config;
+        public static readonly int CONFIG_PARAM_Config = 0;
+        public static readonly int CONFIG_PARAM_Factory = 1;
 
         [SerializeField] private bool m_IsDebug = true;
 
         [SerializeField] private bool m_IsConfigured;
         [SerializeField] private bool m_IsInitialized;
 
+
+        
         public bool IsConfigured => m_IsConfigured;
         public bool IsInitialized => m_IsInitialized;
-
-
-        public event Action Initialized;
-        public event Action Disposed;
 
         public event Action<IMessage> Message;
 
 
         // CONFIGURE //
-        public virtual void Configure(params object[] args)
-        {
-            if (args.Length > 0)
-                foreach (var arg in args)
-                    if (arg is IConfig)
-                        m_Config = (IConfig)arg;
+        public abstract void Configure(params object[] args);
+        public abstract void Init();
+        public abstract void Dispose();
 
-            
-            
-            m_IsConfigured = true;
-            Send("Configuration completed.");
-        }
-
-        public virtual void Init()
-        {
-            m_IsInitialized = true;
-            Initialized?.Invoke();
-
-            Send("Initialization completed!");
-        }
-
-        public virtual void Dispose()
-        {
-            m_IsInitialized = false;
-            Disposed?.Invoke();
-            Send("Dispose completed!");
-        }
-
-
-        // VERIFY //
-        protected virtual bool ConfigureVerification()
+        
+        // VERIFY //        
+        protected virtual bool VerificationOnConfigure()
         {
             if (m_IsConfigured == true)
             {
                 Send($"Instance is already configured.", LogFormat.Warning);
-                Send($"Current configuration was aborted!", LogFormat.Warning);
                 return true;
             }
-
             return false;
         }
 
-        protected virtual bool InitVerification()
+        protected virtual bool VerificationOnInit()
         {
             if (m_IsConfigured == false)
             {
@@ -80,16 +51,12 @@ namespace APP
             if (m_IsInitialized == true)
             {
                 Send($"Instance is already initialized.", LogFormat.Warning);
-                Send($"Current initialization was aborted!", LogFormat.Warning);
                 return true;
             }
 
             return false;
         }
-
-
-        public IConfig GetConfig()
-            => m_Config;
+        
 
         // MESSAGE //
         public IMessage Send(string text, LogFormat format = LogFormat.None)
@@ -105,5 +72,9 @@ namespace APP
         public void OnMessage(IMessage message) =>
             Send($"{message.Sender}: {message.Text}", message.LogFormat);
     }
+
+
+
+
 }
 

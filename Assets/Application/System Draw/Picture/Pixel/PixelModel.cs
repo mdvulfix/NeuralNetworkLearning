@@ -6,24 +6,14 @@ using APP.Brain;
 namespace APP.Draw
 {
     [Serializable]
-    public abstract class PixelModel
+    public abstract class PixelModel: ModelConfigurableOnAwake
     {        
         private IPixel m_Instance;
         private PixelConfig m_Config;
 
-        [SerializeField] private bool m_IsLoaded;
-        [SerializeField] private bool m_IsConfigured;
-        [SerializeField] private bool m_IsInitialized;
-        [SerializeField] private bool m_IsActivated;
-        [SerializeField] private bool m_IsDebug = true;
-
         private int m_LayerMask;
         
-        public bool IsLoaded => m_IsLoaded;
-        public bool IsConfigured => m_IsConfigured;
-        public bool IsInitialized => m_IsInitialized;
-        public bool IsActivated => m_IsActivated;
-        
+
         public Color ColorDefault {get; private set; } = Color.black;
         public Color ColorSelect {get; private set; } = Color.green;
         public Color ColorHover {get; private set; } = Color.grey;
@@ -34,21 +24,15 @@ namespace APP.Draw
 
 
         public static readonly int LOAD_PARAM_Transform = 0;
-        
-        public static readonly int CONFIG_PARAM_Config = 0;
-        public static readonly int CONFIG_PARAM_Factory = 1;
-        
         public static readonly string PREFAB_Folder = "Prefab";
 
         
         public event Action Initialized;
         public event Action Disposed;
 
-        public event Action<IMessage> Message;
-        
-        
+        /*
         // LOAD //
-        public virtual void Load(params object[] args)
+        public override void Load()
         {
             if(VerificationOnLoad())
                 return;
@@ -58,17 +42,10 @@ namespace APP.Draw
             m_IsLoaded = true;
             Send("Load completed.");
         }
-        
-        public virtual void Unload()
-        {
-            Deactivate();
-            
-            m_IsLoaded = false;
-            Send("Unload completed.");
-        }
-        
+        */
+
         // CONFIGURE //
-        public virtual void Configure(params object[] args)
+        public override void Configure(params object[] args)
         {
             if(VerificationOnConfigure())
                 return;
@@ -90,65 +67,43 @@ namespace APP.Draw
             ColorDefault = m_Config.ColorDefault;
             ColorHover = m_Config.ColorHover;
 
-            m_IsConfigured = true;
-            Send("Configuration completed.");
+            base.Configure();
         }
 
-        public virtual void Init()
+        public override void Init()
         {
             if(VerificationOnInit())
                 return;
             
-            m_IsInitialized = true;
-            Initialized?.Invoke();
-
-            Send("Initialization completed!");
+            base.Init();
         }
 
-        public virtual void Dispose()
+        public override void Dispose()
         {
             
-            m_IsInitialized = false;
-            Disposed?.Invoke();
-            Send("Dispose completed!");
+
+
+            base.Dispose();
         }
 
         // ACTIVATE //
-        public virtual void Activate()
+        public override void Activate()
         {
             if(VerificationOnActivate())
                 return;
             
-            try 
-            { 
-                m_IsActivated = true;
-                Pixel.gameObject.SetActive(m_IsActivated); 
-                Send("Activation completed.");
-            }
-            catch (Exception exception) 
-            { 
-                m_IsActivated = false;
-                Send($"Activation failed. Exeption { exception.Message }", LogFormat.Warning);
-            }
+            try { Pixel.gameObject.SetActive(true); base.Activate(); }
+            catch (Exception exception) { Send($"Activation failed. Exeption { exception.Message }", LogFormat.Warning); }
  
             //m_Transform.SetParent(ROOT);
             //m_Transform.position = Vector3.zero;
         }
 
-        public virtual void Deactivate()
+        public override void Deactivate()
         {
-            try 
-            { 
-                m_IsActivated = false;
-                Pixel.gameObject.SetActive(m_IsActivated); 
-                Send("Deactivation completed.");
-            }
-            catch (Exception exception) 
-            { 
-                m_IsActivated = true;
-                Send($"Deactivation failed. Exeption { exception.Message }", LogFormat.Warning);
-            }
-            
+            try { Pixel.gameObject.SetActive(false); base.Deactivate(); }
+            catch (Exception exception) { Send($"Deactivation failed. Exeption { exception.Message }", LogFormat.Warning); }
+
             //transform.SetParent(ROOT_POOL);
             //transform.position = Vector3.zero;
         }
@@ -157,90 +112,6 @@ namespace APP.Draw
         protected abstract void SetColor(Color color);
 
 
-        // VERIFY //
-        protected virtual bool VerificationOnLoad()
-        {
-            if (m_IsLoaded == true)
-            {
-                Send($"Instance is already loaded.", LogFormat.Warning);
-                return true;
-            }
-
-            return false;
-        }
-        
-        protected virtual bool VerificationOnConfigure()
-        {
-            if (m_IsLoaded == false)
-            {
-                Send($"{this.GetName()} is not loaded.", LogFormat.Warning);
-                Send($"Configuration was aborted!", LogFormat.Warning);
-
-                return true;
-            }
-
-            if (m_IsConfigured == true)
-            {
-                Send($"Instance is already configured.", LogFormat.Warning);
-                return true;
-            }
-            return false;
-        }
-
-        protected virtual bool VerificationOnInit()
-        {
-            if (m_IsConfigured == false)
-            {
-                Send($"Instance is not configured.", LogFormat.Warning);
-                Send($"Initialization was aborted!", LogFormat.Warning);
-
-                return true;
-            }
-
-            if (m_IsInitialized == true)
-            {
-                Send($"Instance is already initialized.", LogFormat.Warning);
-                return true;
-            }
-
-            return false;
-        }
-        
-        protected virtual bool VerificationOnActivate()
-        {
-            if (m_IsInitialized== false)
-            {
-                Send($"Instance is not initialized.", LogFormat.Warning);
-                Send($"Activation was aborted!", LogFormat.Warning);
-
-                return true;
-            }
-
-            if (m_IsActivated == true)
-            {
-                Send($"Instance is already activated.", LogFormat.Warning);
-                return true;
-            }
-
-            return false;
-        }
-
-
-
-        // MESSAGE //
-        public IMessage Send(string text, LogFormat format = LogFormat.None)
-            => Send(new Message(this, text, format));
-
-        public IMessage Send(IMessage message)
-        {
-            Message?.Invoke(message);
-            return Messager.Send(m_IsDebug, this, message.Text, message.LogFormat);
-        }
-
-        public void OnMessage(IMessage message) =>
-            Send($"{message.Sender}: {message.Text}", message.LogFormat);
-        
-        
         // FACTORY //
         public static TPixel Get<TPixel>(params object[] args)
         where TPixel: IPixel
@@ -257,6 +128,11 @@ namespace APP.Draw
             return instance;
         }
     }
+    
+    
+    
+    
+    
     
     public interface IPixel: IConfigurable, ILoadable, IActivable, ISelectable, ISensible, IMessager
     {
@@ -301,13 +177,5 @@ namespace APP.Draw
             Set<Pixel2D>(Constructor.Get((args) => GetPixel2D(args)));
             Set<Pixel3D>(Constructor.Get((args) => GetPixel3D(args)));
         }
-    }
-}
-
-namespace APP
-{
-    public interface ILoadable
-    {
-        void Load(params object[] args);
     }
 }

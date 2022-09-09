@@ -30,7 +30,7 @@ namespace APP.Draw
         }   
 
 
-        public override void Load(params object[] args)
+        public override void Load()
         {
             if(VerificationOnLoad())
                 return;
@@ -51,7 +51,7 @@ namespace APP.Draw
                 m_Collider = obj.AddComponent<BoxCollider2D>();
             
             //m_Collider.offset = 0;
-            base.Load(obj.transform);
+            base.Load();
             
         }
         

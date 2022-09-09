@@ -46,6 +46,9 @@ namespace APP.Draw
             if (obj.TryGetComponent<BoxCollider>(out m_Collider) == false)
                 m_Collider = obj.AddComponent<BoxCollider>();
 
+            
+
+            
             //m_Collider.offset = 0;
             base.Load(obj.transform);
 
@@ -60,6 +63,15 @@ namespace APP.Draw
             var hoverColor = Color.grey;
 
 
+            if (obj.TryGetComponent<MeshRenderer>(out m_Renderer) == false)
+                m_Renderer = ga.AddComponent<MeshRenderer>();
+
+            if (obj.TryGetComponent<BoxCollider>(out m_Collider) == false)
+                m_Collider = obj.AddComponent<BoxCollider>();
+            
+            
+            
+            
             m_Renderer.material.SetColor("_Color", backgroundColor);
 
             //m_Collider.size = Vector2.one;
@@ -104,7 +116,6 @@ namespace APP.Draw
             SetColor(ColorDefault);
         }
 
-
         public void OnHovered(bool hovered)
         {
             if (hovered == true)
@@ -141,6 +152,22 @@ namespace APP.Draw
     {
         private Pixel3D GetPixel3D(params object[] args)
         {
+            
+            
+            var prefabPath = $"{PixelModel.PREFAB_Folder}/{Pixel3D.PREFAB_Label}";
+            var prefab = Resources.Load<GameObject>(prefabPath);
+
+            var obj = (prefab != null) ?
+            GameObject.Instantiate(prefab, Vector3.zero, Quaternion.identity) :
+            new GameObject("Pixel");
+
+            obj.SetActive(false);
+
+
+            
+            
+            
+            
             /*
             var prefabPath = $"{PixelModel.PREFAB_Folder}/{Pixel3D.PREFAB_Label}";
             var prefab = Resources.Load<GameObject>(prefabPath);
