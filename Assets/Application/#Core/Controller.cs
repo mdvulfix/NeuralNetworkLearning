@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace APP
 {
-    public abstract class AController: AConfigurable
+    public abstract class ModelController: ModelConfigurable
     {
         public static readonly int PARAM_INDEX_Factory = 1;
         

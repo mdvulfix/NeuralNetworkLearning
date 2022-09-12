@@ -112,9 +112,19 @@ namespace APP
         public Transform GetTransform()
             => transform;
 
+
         // MESSAGE //
+        public IMessage Send(string text, bool isDebag, LogFormat format = LogFormat.None)
+            => Send(new Message(this, text, format), isDebag);
+
         public IMessage Send(string text, LogFormat format = LogFormat.None)
             => Send(new Message(this, text, format));
+             
+        public IMessage Send(IMessage message, bool isDebag)
+        {
+            Message?.Invoke(message);
+            return Messager.Send(isDebag, this, message.Text, message.LogFormat);
+        }
 
         public IMessage Send(IMessage message)
         {
@@ -132,43 +142,43 @@ namespace APP
         protected virtual void OnConfigureComplete(bool isDebag)
         {
             m_IsConfigured = true; 
-            ("Configure complete.").Send(isDebag);
+            Send("Configure complete.", isDebag);
         }
         
         protected virtual void OnInitComplete(bool isDebag)
         {
             m_IsInitialized = true; 
-            ("Initialize complete.").Send(isDebag);
+            Send("Initialize complete.", isDebag);
         }
         
         protected virtual void OnDisposeComplete(bool isDebag)
         {
             m_IsInitialized = false;
-            ("Dispose complete.").Send(isDebag); 
+            Send("Dispose complete.", isDebag); 
         }
         
         protected virtual void OnActivatedComplete(bool isDebag)
         {
             m_IsActivated = true;
-            ("Activated complete.").Send(isDebag); 
+            Send("Activated complete.", isDebag); 
         }
         
         protected virtual void OnDeactivatedComplete(bool isDebag)
         {
             m_IsActivated = false;
-            ("Deactivated complete.").Send(isDebag); 
+            Send("Deactivated complete.", isDebag); 
         }
         
         protected virtual void OnRecordComplete(bool isDebag)
         {
             m_IsActivated = true;
-            ("The instance is written to the cache.").Send(isDebag); 
+            Send("The instance is written to the cache.", isDebag); 
         }
         
         protected virtual void OnClearComplete(bool isDebag)
         {
             m_IsActivated = false;
-            ("The instance was cleared from the cache.").Send(isDebag); 
+            Send("The instance was cleared from the cache.", isDebag); 
         }
         
         // UNITY //

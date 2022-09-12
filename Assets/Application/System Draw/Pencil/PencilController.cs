@@ -5,7 +5,7 @@ using UInput = UnityEngine.Input;
 namespace APP.Draw
 {
     [Serializable]
-    public class PencilController : AController, IController //, IUpdateble
+    public class PencilController : ModelController, IController //, IUpdateble
     {
 
         private Color m_ColorDraw = Color.green;
@@ -21,7 +21,7 @@ namespace APP.Draw
 
         public override void Configure(params object[] args)
         {
-            var config = (PencilControllerConfig)args[PARAM_INDEX_Config];
+            var config = (PencilControllerConfig)args[PARAMS_Config];
 
             m_Pencil = config.Pencil;
             

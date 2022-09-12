@@ -38,7 +38,7 @@ namespace APP.Input
                 return;
             }
             
-            // CONFIGURE BU DEFAULT //
+            // CONFIGURE BY DEFAULT //
             var position = Vector3.zero;
             var defaultColor = m_Renderer.color;
             var layerMask = 5;

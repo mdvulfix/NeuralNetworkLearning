@@ -7,7 +7,7 @@ namespace APP.Pool
 {
 
 
-    public class PoolController<TPoolable> : AController, IPoolController<TPoolable>
+    public class PoolController<TPoolable> : ModelController, IPoolController<TPoolable>
     where TPoolable : IPoolable
     {
         private static IPool<TPoolable> m_Pool;
@@ -24,7 +24,7 @@ namespace APP.Pool
 
         public override void Configure(params object[] args)
         {
-            var config = (PoolControllerConfig)args[PARAM_INDEX_Config];
+            var config = (PoolControllerConfig)args[PARAMS_Config];
 
             //m_FactoryPoolable = config.PoolableFactory;
 

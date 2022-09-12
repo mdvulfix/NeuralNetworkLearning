@@ -8,7 +8,7 @@ using UCamera = UnityEngine.Camera;
 namespace APP.Input
 {
     [Serializable]
-    public class InputController : AController, IController, IUpdateble
+    public class InputController : ModelController, IController, IUpdateble
     {
 
         private UCamera m_CameraMain;
@@ -36,7 +36,7 @@ namespace APP.Input
         public override void Configure(params object[] args)
         {
             var config = args.Length > 0 ?
-            (InputControllerConfig)args[PARAM_INDEX_Config] :
+            (InputControllerConfig)args[PARAMS_Config] :
             default(InputControllerConfig);
 
             m_CameraMain = config.CameraMain;
@@ -78,8 +78,9 @@ namespace APP.Input
         public void Update()
         {
             PointerFollowMousePosition(m_CameraMain, UInput.mousePosition);
-            HandleHover();
             HandleSelect();
+            HandleHover();
+            
         }
 
         public void FixedUpdate()
@@ -97,7 +98,11 @@ namespace APP.Input
                     m_IsHovered.OnHovered(false);
                     m_IsHovered = selectable;
                     m_IsHovered.OnHovered(true);
+                    return;
                 }
+                
+                m_IsHovered = selectable;
+                m_IsHovered.OnHovered(true);
             }
         }
 

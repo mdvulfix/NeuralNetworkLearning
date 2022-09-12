@@ -19,9 +19,9 @@ namespace APP
         
         private PictureController m_PictureController;
         private IPicture m_Picture;
-        private int m_PictureWidht = 10;
-        private int m_PictureHeight = 10;
-        private int m_PicturLayerMask = 8;
+        private int m_PictureWidht;
+        private int m_PictureHeight;
+        private int m_PicturLayerMask;
 
         private Color m_BackgroundColor = Color.black;
         private Color m_HoverColor = Color.grey;
@@ -73,7 +73,9 @@ namespace APP
             //m_InputController.Selected += OnSelected;
             m_InputController.Init();
             
-
+            m_PictureWidht = 10;
+            m_PictureHeight = 10;
+            m_PicturLayerMask = 8;
             m_Picture = Picture3D.Get(new PictureConfig(m_PictureWidht, m_PictureHeight, m_BackgroundColor, m_HoverColor, m_PicturLayerMask, m_Scene));
             m_PictureController = PictureController.Get(new PictureControllerConfig(m_Picture));
             m_PictureController.Init();

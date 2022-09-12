@@ -11,7 +11,7 @@ namespace APP.Draw
         private MeshRenderer m_Renderer;
         private BoxCollider m_Collider;
 
-        private Color ColorCurrent => m_Renderer.sharedMaterial.color;
+        private Color m_Color;
 
         public static readonly string PREFAB_Label = "Pixel3D";
 
@@ -49,7 +49,7 @@ namespace APP.Draw
                 return;
             }
 
-            // CONFIGURE BU DEFAULT //
+            // CONFIGURE BY DEFAULT //
             var position = Vector3.zero;
             var layerMask = 8;
 
@@ -71,35 +71,40 @@ namespace APP.Draw
         {
             if (selected == true)
             {
-                if (ColorCurrent == ColorSelect)
+                if (GetColor() == ColorSelect)
                     return;
 
-                SetColor(ColorSelect);
+                m_Color = ColorSelect;
+                SetColor(m_Color);
                 return;
             }
 
-            SetColor(ColorDefault);
+            m_Color = ColorDefault;
+            SetColor(m_Color);
         }
 
         public void OnHovered(bool hovered)
         {
             if (hovered == true)
             {
-                if (ColorCurrent == ColorHover)
+                if (GetColor() == ColorHover)
                     return;
 
                 SetColor(ColorHover);
                 return;
             }
             
-            SetColor(ColorDefault);
+            SetColor(m_Color);
         }
 
 
         protected override void SetColor(Color color)
             => m_Renderer.material.SetColor("_Color", color);
 
-
+        private Color GetColor()
+            => m_Renderer.sharedMaterial.color;
+        
+        
         public void Excite()
         {
 

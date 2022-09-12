@@ -6,7 +6,7 @@ using UnityEngine;
 namespace APP.Draw
 {
     [Serializable]
-    public class PictureController: AController, IPictureController
+    public class PictureController: ModelController, IPictureController
     {
        
         [SerializeField] private IPicture m_Picture;
@@ -25,7 +25,7 @@ namespace APP.Draw
         public override void Configure(params object[] args)
         {
             
-            var config = (PictureControllerConfig)args[PARAM_INDEX_Config];
+            var config = (PictureControllerConfig)args[PARAMS_Config];
             m_Picture = config.Picture;
             
             base.Configure(args);

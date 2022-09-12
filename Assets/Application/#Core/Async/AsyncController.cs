@@ -8,7 +8,7 @@ using APP.Pool;
 
 namespace APP
 {
-    public class AsyncController : AController, IController, IUpdateble
+    public class AsyncController : ModelController, IController, IUpdateble
     {
 
         private static List<IAwaiter> m_AwaiterIsReady;
@@ -29,7 +29,7 @@ namespace APP
 
         public override void Configure(params object[] args)
         {
-            var config = (AsyncControllerConfig)args[PARAM_INDEX_Config];
+            var config = (AsyncControllerConfig)args[PARAMS_Config];
             
             if (m_AwaiterIsReady == null)
                 m_AwaiterIsReady = new List<IAwaiter>(m_AwaiterIsReadyLimit);

@@ -60,9 +60,19 @@ namespace APP
         }
         
 
+
         // MESSAGE //
+        public IMessage Send(string text, bool isDebag, LogFormat format = LogFormat.None)
+            => Send(new Message(this, text, format), isDebag);
+
         public IMessage Send(string text, LogFormat format = LogFormat.None)
             => Send(new Message(this, text, format));
+             
+        public IMessage Send(IMessage message, bool isDebag)
+        {
+            Message?.Invoke(message);
+            return Messager.Send(isDebag, this, message.Text, message.LogFormat);
+        }
 
         public IMessage Send(IMessage message)
         {
@@ -70,26 +80,25 @@ namespace APP
             return Messager.Send(m_IsDebug, this, message.Text, message.LogFormat);
         }
 
-        
 
         protected virtual void OnConfigureComplete(bool isDebag)
         {
             m_IsConfigured = true; 
-            ("Configure complete.").Send(isDebag);
+            Send("Configure complete.", isDebag);
         }
         
         protected virtual void OnInitComplete(bool isDebag)
         {
             m_IsInitialized = true; 
-            ("Initialize complete.").Send(isDebag);
+            Send("Initialize complete.", isDebag);
         }
         
         protected virtual void OnDisposeComplete(bool isDebag)
         {
             m_IsInitialized = false;
-            ("Dispose complete.").Send(isDebag); 
+            Send("Dispose complete.", isDebag); 
         }
-
+        
         
         public void OnMessage(IMessage message) =>
             Send($"{message.Sender}: {message.Text}", message.LogFormat);

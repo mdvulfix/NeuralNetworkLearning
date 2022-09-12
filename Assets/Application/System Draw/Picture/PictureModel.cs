@@ -10,22 +10,22 @@ namespace APP.Draw
     [Serializable]
     public abstract class PictureModel : ModelCacheable
     {
-        
-        
         private PictureConfig m_Config;
         
-        [SerializeField] private int m_Width;
-        [SerializeField] private int m_Height;
-
+    
         private IPixel[,] m_Matrix;
         private List<IPixel> m_Pixels;
 
-        [SerializeField] private Color m_BackgroundColor = Color.black;
-        [SerializeField] private Color m_HoverColor = Color.grey;
 
-        private int m_LayerMask;
 
         public IPicture Instance {get; private set; }
+        public int Width {get; private set; }
+        public int Height {get; private set; }
+        public int LayerMask {get => gameObject.layer; private set => gameObject.layer = value; }
+        public Color ColorBackground {get; private set; }
+        public Color ColorHover {get; private set; }
+
+        
         public IPixel PixelActive => m_Pixels.Where(pixel => pixel.IsActivated == true).First();
 
         public static readonly string PREFAB_Folder = "Prefab";
@@ -40,14 +40,12 @@ namespace APP.Draw
             (PictureConfig)args[PARAMS_Config] :
             default(PictureConfig);
 
-            m_Width = m_Config.Width;
-            m_Height = m_Config.Height;
-            m_BackgroundColor = m_Config.BackgroundColor;
-            m_HoverColor = m_Config.HoverColor;
-            
-            m_LayerMask = m_Config.LayerMask;
+            Width = m_Config.Width;
+            Height = m_Config.Height;
+            ColorBackground = m_Config.BackgroundColor;
+            ColorHover = m_Config.HoverColor;
+            LayerMask = m_Config.LayerMask;
 
-             
             if(m_Config.Parent != null)
                 transform.SetParent(m_Config.Parent);
             
@@ -59,14 +57,14 @@ namespace APP.Draw
             if(VerifyOnInit())
                 return;
             
-            m_Matrix = new IPixel[m_Width, m_Height];
+            m_Matrix = new IPixel[Width, Height];
             m_Pixels = new List<IPixel>();
                         
-            for (int x = 0; x < m_Width; x++)
+            for (int x = 0; x < Width; x++)
             {
-                for (int y = 0; y < m_Height; y++)
+                for (int y = 0; y < Height; y++)
                 {
-                    var position = new Vector3(x - m_Width / 2, y - m_Height / 2);
+                    var position = new Vector3(x - Width / 2, y - Height / 2);
                     
                     var pixel = GetPixel(position);
                     pixel.Init();

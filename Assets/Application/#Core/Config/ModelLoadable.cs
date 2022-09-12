@@ -42,8 +42,17 @@ namespace APP
 
 
         // MESSAGE //
+        public IMessage Send(string text, bool isDebag, LogFormat format = LogFormat.None)
+            => Send(new Message(this, text, format), isDebag);
+
         public IMessage Send(string text, LogFormat format = LogFormat.None)
             => Send(new Message(this, text, format));
+             
+        public IMessage Send(IMessage message, bool isDebag)
+        {
+            Message?.Invoke(message);
+            return Messager.Send(isDebag, this, message.Text, message.LogFormat);
+        }
 
         public IMessage Send(IMessage message)
         {
@@ -109,37 +118,37 @@ namespace APP
         protected virtual void OnLoadComplete(bool isDebag)
         {
             m_IsLoaded = true; 
-            ($"Load complete.").Send(this, isDebag);
+            Send($"Load complete.", isDebag);
         }
 
         protected virtual void OnConfigureComplete(bool isDebag)
         {
             m_IsConfigured = true; 
-            ("Configure complete.").Send(this, isDebag);
+            Send("Configure complete.", isDebag);
         }
         
         protected virtual void OnInitComplete(bool isDebag)
         {
             m_IsInitialized = true; 
-            ("Initialize complete.").Send(this, isDebag);
+            Send("Initialize complete.", isDebag);
         }
         
         protected virtual void OnDisposeComplete(bool isDebag)
         {
             m_IsInitialized = false;
-            ("Dispose complete.").Send(this, isDebag); 
+            Send("Dispose complete.", isDebag); 
         }
         
         protected virtual void OnActivatedComplete(bool isDebag)
         {
             m_IsActivated = true;
-            ("Activated complete.").Send(this, isDebag); 
+            Send("Activated complete.", isDebag); 
         }
         
         protected virtual void OnDeactivatedComplete(bool isDebag)
         {
             m_IsActivated = false;
-            ("Deactivated complete.").Send(this, isDebag); 
+            Send("Deactivated complete.", isDebag); 
         }
         
         
