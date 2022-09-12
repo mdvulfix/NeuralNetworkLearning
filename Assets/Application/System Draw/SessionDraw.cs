@@ -7,7 +7,7 @@ using APP.Input;
 
 namespace APP
 {
-    public class SessionDraw: AConfigurableOnAwake, IConfigurable, IUpdateble
+    public class SessionDraw: ModelLoadable, IUpdateble
     {
         [SerializeField] private Transform m_Scene;
         [SerializeField] private UCamera m_CameraMain;
@@ -31,10 +31,22 @@ namespace APP
         [SerializeField] private AsyncController m_AsyncController;
 
 
+        public override void Load()
+        {
+            var config =  new SessionConfig();
+            Configure(config);
+
+            base.Load();
+        }
+        
+        
         public override void Configure(params object[] args)
         {
+            if(VerifyOnConfigure())
+                return;
+            
             var config = args.Length > 0 ? 
-            (SessionConfig)args[PARAM_INDEX_Config] : 
+            (SessionConfig)args[PARAMS_Config] : 
             default(SessionConfig);
 
             if(m_CameraMain == null)
@@ -49,6 +61,8 @@ namespace APP
                 return;
             }
             
+
+
             
             base.Configure(args);
         }
@@ -94,6 +108,8 @@ namespace APP
             m_InputController.Update();
             //m_PencilController.Update();
         }
+
+
 
         /*
         public void OnSelected(ISelectable selectable, int button)

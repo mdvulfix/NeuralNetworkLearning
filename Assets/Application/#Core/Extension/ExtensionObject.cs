@@ -16,8 +16,12 @@ namespace APP
 
 
         public static IMessage Send(this object instance, bool debug = true, LogFormat format = LogFormat.None)
+            => Send(instance, debug, format);
+
+
+        public static IMessage Send(this object instance, object sender, bool debug = true, LogFormat format = LogFormat.None)
         {
-            try { return Messager.Send(debug, instance, (string)instance, format); }
+            try { return Messager.Send(debug, sender, (string)instance, format); }
             catch (Exception exception)
             {
                 Debug.LogWarning($"Send log failed! Exception: {exception.Message}");
@@ -26,5 +30,6 @@ namespace APP
                 return null;
             }
         }
+
     }
 }

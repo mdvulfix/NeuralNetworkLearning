@@ -34,6 +34,7 @@ namespace APP.Draw
         public override void Init()
         {
             m_Picture.Init();
+            m_Picture.Activate();
             base.Init();
         }
 

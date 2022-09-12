@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace APP
 {
-    public class AwaiterModel: AConfigurableOnAwake
+    public class AwaiterModel: ModelCacheable
     {
         private static Transform ROOT;
         private static Transform ROOT_POOL;
@@ -16,7 +16,7 @@ namespace APP
 
         private Func<IEnumerator> Func;
 
-        public Transform Awaiter => gameObject.transform;
+
         public bool IsReady => m_IsReady;
 
         public event Action<IAwaiter> FuncStarted;
@@ -27,10 +27,10 @@ namespace APP
 
         public override void Configure(params object[] args)
         {
-            var config = (AwaiterConfig)args[PARAM_INDEX_Config];
+            var config = (AwaiterConfig)args[PARAMS_Config];
             
             m_Instance = config.Instance;
-            Awaiter.name = config.Label;
+            transform.name = config.Label;
 
             if (ROOT == null)
                 ROOT = SceneRoot.AWAITER;

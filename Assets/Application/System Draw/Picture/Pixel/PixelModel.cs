@@ -6,110 +6,55 @@ using APP.Brain;
 namespace APP.Draw
 {
     [Serializable]
-    public abstract class PixelModel: ModelConfigurableOnAwake
+    public abstract class PixelModel: ModelCacheable
     {        
-        private IPixel m_Instance;
         private PixelConfig m_Config;
 
         private int m_LayerMask;
         
+        public IPixel Instance {get; private set;}
+        
+        public Vector3 Position { get => transform.position; private set => transform.position = value; }
+
 
         public Color ColorDefault {get; private set; } = Color.black;
         public Color ColorSelect {get; private set; } = Color.green;
         public Color ColorHover {get; private set; } = Color.grey;
                 
         
-        public Transform Pixel { get; private set; }
-        public Vector3 Position { get => Pixel.position; private set => Pixel.position = value; }
-
-
-        public static readonly int LOAD_PARAM_Transform = 0;
+        
         public static readonly string PREFAB_Folder = "Prefab";
 
         
-        public event Action Initialized;
-        public event Action Disposed;
-
-        /*
-        // LOAD //
-        public override void Load()
-        {
-            if(VerificationOnLoad())
-                return;
-            
-            Pixel = (Transform)args[LOAD_PARAM_Transform];
-            
-            m_IsLoaded = true;
-            Send("Load completed.");
-        }
-        */
 
         // CONFIGURE //
         public override void Configure(params object[] args)
         {
-            if(VerificationOnConfigure())
+            if(VerifyOnConfigure())
                 return;
 
             m_Config = args.Length > 0 ?
-            (PixelConfig)args[CONFIG_PARAM_Config] :
+            (PixelConfig)args[PARAMS_Config] :
             default(PixelConfig);
-            
-            m_Instance = m_Config.Instance;
-
+        
+            Instance = m_Config.Instance;
             Position = m_Config.Position;
-            Pixel.name = $"Pixel ({Position.x.ToString()}; {Position.y.ToString()})";
-            Pixel.gameObject.layer = m_Config.LayerMask;
+            
+            transform.name = $"Pixel ({Position.x.ToString()}; {Position.y.ToString()})";
+            gameObject.layer = m_Config.LayerMask;
 
             if(m_Config.Parent != null )
-                Pixel.SetParent(m_Config.Parent);
+                transform.SetParent(m_Config.Parent);
                         
-            
             ColorDefault = m_Config.ColorDefault;
             ColorHover = m_Config.ColorHover;
 
-            base.Configure();
-        }
-
-        public override void Init()
-        {
-            if(VerificationOnInit())
-                return;
-            
-            base.Init();
-        }
-
-        public override void Dispose()
-        {
-            
-
-
-            base.Dispose();
-        }
-
-        // ACTIVATE //
-        public override void Activate()
-        {
-            if(VerificationOnActivate())
-                return;
-            
-            try { Pixel.gameObject.SetActive(true); base.Activate(); }
-            catch (Exception exception) { Send($"Activation failed. Exeption { exception.Message }", LogFormat.Warning); }
- 
-            //m_Transform.SetParent(ROOT);
-            //m_Transform.position = Vector3.zero;
-        }
-
-        public override void Deactivate()
-        {
-            try { Pixel.gameObject.SetActive(false); base.Deactivate(); }
-            catch (Exception exception) { Send($"Deactivation failed. Exeption { exception.Message }", LogFormat.Warning); }
-
-            //transform.SetParent(ROOT_POOL);
-            //transform.position = Vector3.zero;
+            base.Configure(args);
         }
 
 
         protected abstract void SetColor(Color color);
+
 
 
         // FACTORY //
@@ -119,7 +64,7 @@ namespace APP.Draw
             IFactory factoryCustom = null;
             
             if(args.Length > 0)
-                try{ factoryCustom = (IFactory)args[CONFIG_PARAM_Factory]; } catch { Debug.Log("Custom factory not found! The instance will be created by default."); }
+                try{ factoryCustom = (IFactory)args[PARAMS_Factory]; } catch { Debug.Log("Custom factory not found! The instance will be created by default."); }
 
             
             var factory = (factoryCustom != null) ? factoryCustom : new PixelFactory();
@@ -134,7 +79,7 @@ namespace APP.Draw
     
     
     
-    public interface IPixel: IConfigurable, ILoadable, IActivable, ISelectable, ISensible, IMessager
+    public interface IPixel: IConfigurable, ICacheable, IActivable, ISelectable, ISensible, IMessager
     {
         
     }
@@ -178,4 +123,5 @@ namespace APP.Draw
             Set<Pixel3D>(Constructor.Get((args) => GetPixel3D(args)));
         }
     }
+
 }

@@ -8,9 +8,12 @@ using APP.Brain;
 namespace APP.Draw
 {
     [Serializable]
-    public abstract class PictureModel<TPixel> : AConfigurable
-    where TPixel: IPixel
+    public abstract class PictureModel : ModelCacheable
     {
+        
+        
+        private PictureConfig m_Config;
+        
         [SerializeField] private int m_Width;
         [SerializeField] private int m_Height;
 
@@ -22,36 +25,39 @@ namespace APP.Draw
 
         private int m_LayerMask;
 
-        private Sprite m_Sprite;
-        private static int PARAM_INDEX_Factory;
-
-        public Transform Parent {get; private set; }
-        public Transform Picture {get; private set; }
+        public IPicture Instance {get; private set; }
         public IPixel PixelActive => m_Pixels.Where(pixel => pixel.IsActivated == true).First();
 
+        public static readonly string PREFAB_Folder = "Prefab";
+
+        // CONFIGURE //
         public override void Configure(params object[] args)
         {
-            var config = (PictureConfig)args[PARAM_INDEX_Config];
-
-            m_Width = config.Width;
-            m_Height = config.Height;
-            m_BackgroundColor = config.BackgroundColor;
-            m_HoverColor = config.HoverColor;
+            if(VerifyOnConfigure())
+                return;
             
-            m_LayerMask = config.LayerMask;
+            m_Config = args.Length > 0 ?
+            (PictureConfig)args[PARAMS_Config] :
+            default(PictureConfig);
 
-            Parent = config.Parent;
+            m_Width = m_Config.Width;
+            m_Height = m_Config.Height;
+            m_BackgroundColor = m_Config.BackgroundColor;
+            m_HoverColor = m_Config.HoverColor;
+            
+            m_LayerMask = m_Config.LayerMask;
 
+             
+            if(m_Config.Parent != null)
+                transform.SetParent(m_Config.Parent);
+            
             base.Configure(args);
         }
 
         public override void Init()
         {
-
-            Picture = new GameObject("Picture").transform;
-             
-            if(Parent != null)
-                Picture.SetParent(Parent);
+            if(VerifyOnInit())
+                return;
             
             m_Matrix = new IPixel[m_Width, m_Height];
             m_Pixels = new List<IPixel>();
@@ -62,25 +68,17 @@ namespace APP.Draw
                 {
                     var position = new Vector3(x - m_Width / 2, y - m_Height / 2);
                     
-                    var pixel = PixelModel.Get<TPixel>();
-                    var pixelConfig = new PixelConfig(pixel, position, m_BackgroundColor, m_HoverColor, m_LayerMask, Picture);
-                    
-                    pixel.Configure(pixelConfig);
+                    var pixel = GetPixel(position);
                     pixel.Init();
 
                     m_Pixels.Add(m_Matrix[x, y] = pixel);
-                    
                 }
             }
 
             
-            foreach (var pixel in m_Pixels)
-                pixel.Activate();      
-            
             base.Init();
         }
 
-        
         public override void Dispose()
         {
             foreach (var pixel in m_Pixels)
@@ -88,22 +86,41 @@ namespace APP.Draw
 
             m_Pixels.Clear();
 
-
             base.Dispose();
         }
+
+
+        public override void Activate()
+        {
+            foreach (var pixel in m_Pixels)
+                pixel.Activate(); 
+
+            base.Activate();  
+        }
+
+        public override void Deactivate()
+        {
+            foreach (var pixel in m_Pixels)
+                pixel.Deactivate(); 
+
+            base.Deactivate();  
+        }
+
+        
+        public abstract IPixel GetPixel(Vector3 position);
 
         
         public IEnumerable<ISensible> GetSensibles() =>
             m_Pixels;
 
-        
+        // FACTORY //
         public static TPicture Get<TPicture>(params object[] args)
         where TPicture: IPicture
         {
             IFactory factoryCustom = null;
             
             if(args.Length > 0)
-                try{ factoryCustom = (IFactory)args[PARAM_INDEX_Factory]; } catch { Debug.Log("Custom factory not found! The instance will be created by default."); }
+                try{ factoryCustom = (IFactory)args[PARAMS_Factory]; } catch { Debug.Log("Custom factory not found! The instance will be created by default."); }
 
             
             var factory = (factoryCustom != null) ? factoryCustom : new PictureFactory();
@@ -133,10 +150,8 @@ namespace APP.Draw
         public Transform Parent { get; internal set; }
     }
 
-    public interface IPicture: IConfigurable, IRecognizable
+    public interface IPicture: IConfigurable, ICacheable, IActivable, IMessager, IRecognizable
     {
-        Transform Picture {get; }
-
         IPixel PixelActive { get; }
     }
 

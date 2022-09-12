@@ -60,6 +60,8 @@
             "textMateRules": 
             [
                 
+                
+
                 {
                     "scope": "source.cs entity.name.type.class.cs",
                     "settings": 
@@ -118,7 +120,22 @@
                         "fontStyle": ""
                     }
                     
+                },
+   
+                {
+                    "scope": "source.cs entity.name.variable.parameter.cs",
+                    "settings": 
+                    {
+                        //"foreground": "#B274AA",
+                        "foreground": "#ffbcff",
+                        //"foreground": "#ffff00",
+                        //"foreground": "#ffffff",
+                        //"foreground": "#00ffff",
+                        "fontStyle": "italic"
+                    }
+                    
                 }
+           
                 
             ]
         }
