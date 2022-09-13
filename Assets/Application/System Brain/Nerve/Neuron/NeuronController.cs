@@ -5,6 +5,10 @@ namespace APP.Brain
 {
     public class NeuronController
     {
+        
+        
+        
+        
         private NeuronControllerConfig m_Config;
         
         private IEnumerable m_NeuronArr;

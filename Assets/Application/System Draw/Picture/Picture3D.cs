@@ -34,19 +34,20 @@ namespace APP.Draw
             if(Seacher.Find<IScene>(out var scenes))
                 parent = scenes[0].Scene;
    
-            var pictureConfig = new PictureConfig(width, height, colorDefault, colorHover, layerMask, parent);
+            var pictureConfig = new PictureConfig(this, width, height, colorDefault, colorHover, layerMask, parent);
             base.Configure(pictureConfig);
             Send($"{ this.GetName() } was configured by default!");
         }
 
 
         
-        public override IPixel GetPixel(Vector3 position)
+        protected override IPixel GetPixel(Vector3 position)
         {
             var pixel = Pixel3D.Get();
             var pixelParent = GetTransform();
             var pixelConfig = new PixelConfig(pixel, position, ColorBackground, ColorHover, LayerMask, pixelParent);
             pixel.Configure(pixelConfig);
+            pixel.Init();
 
             return pixel;
         }

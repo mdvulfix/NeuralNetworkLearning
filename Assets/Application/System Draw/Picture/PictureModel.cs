@@ -16,17 +16,12 @@ namespace APP.Draw
         private IPixel[,] m_Matrix;
         private List<IPixel> m_Pixels;
 
-
-
         public IPicture Instance {get; private set; }
         public int Width {get; private set; }
         public int Height {get; private set; }
         public int LayerMask {get => gameObject.layer; private set => gameObject.layer = value; }
         public Color ColorBackground {get; private set; }
         public Color ColorHover {get; private set; }
-
-        
-        public IPixel PixelActive => m_Pixels.Where(pixel => pixel.IsActivated == true).First();
 
         public static readonly string PREFAB_Folder = "Prefab";
 
@@ -40,6 +35,7 @@ namespace APP.Draw
             (PictureConfig)args[PARAMS_Config] :
             default(PictureConfig);
 
+            Instance = m_Config.Instance;
             Width = m_Config.Width;
             Height = m_Config.Height;
             ColorBackground = m_Config.BackgroundColor;
@@ -105,12 +101,18 @@ namespace APP.Draw
         }
 
         
-        public abstract IPixel GetPixel(Vector3 position);
+        
 
         
         public IEnumerable<ISensible> GetSensibles() =>
             m_Pixels;
 
+        
+        
+        protected abstract IPixel GetPixel(Vector3 position);
+        
+        
+        
         // FACTORY //
         public static TPicture Get<TPicture>(params object[] args)
         where TPicture: IPicture
@@ -130,27 +132,31 @@ namespace APP.Draw
 
     public struct PictureConfig
     {
-        public PictureConfig(int width, int height, Color backgroundColor, Color hoverColor, int layerMask, Transform parent)
+        public PictureConfig(IPicture instance, int width, int height, Color backgroundColor, Color hoverColor, int layerMask, Transform parent)
         {
+            Instance = instance;
             Width = width;
             Height = height;
             BackgroundColor = backgroundColor;
             HoverColor = hoverColor;
             LayerMask = layerMask;
             Parent = parent;
+            
         }
 
+        public IPicture Instance { get; private set; }
         public int Width { get; private set; }
         public int Height { get; private set; }
         public Color BackgroundColor { get; private set; }
         public Color HoverColor { get; private set; }
         public int LayerMask { get; }
         public Transform Parent { get; internal set; }
+        
     }
 
     public interface IPicture: IConfigurable, ICacheable, IActivable, IMessager, IRecognizable
     {
-        IPixel PixelActive { get; }
+
     }
 
     public partial class PictureFactory : Factory<IPicture>

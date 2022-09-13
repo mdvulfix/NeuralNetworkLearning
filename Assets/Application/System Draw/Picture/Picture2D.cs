@@ -4,16 +4,6 @@ namespace APP.Draw
 {
     public class Picture2D : PictureModel, IPicture
     {
-        private Transform m_Parent;
-
-        private int m_Width;
-        private int m_Height;
-
-        private int m_LayerMask;
-
-        private Color m_PixelColorDefault;
-        private Color m_PixelColorHover;
-
         public static readonly string PREFAB_Label = "Picture2D";
 
         public Picture2D() { }
@@ -34,29 +24,30 @@ namespace APP.Draw
             }
 
             
-            // CONFIGURE BU DEFAULT //
-            m_Width = 5;
-            m_Height = 5;
-            m_PixelColorDefault = Color.black;
-            m_PixelColorHover = Color.grey;
-            m_LayerMask = 8;
+            // CONFIGURE BY DEFAULT //
+            var width = 5;
+            var height = 5;
+            var colorDefault = Color.black;
+            var colorHover = Color.grey;
+            var layerMask = 8;
 
-            
+            Transform parent = null;
             if(Seacher.Find<IScene>(out var scenes))
-                m_Parent = scenes[0].Scene;
+                parent = scenes[0].Scene;
    
-            var pixelConfig = new PictureConfig(m_Width, m_Height, m_PixelColorDefault, m_PixelColorHover, m_LayerMask, m_Parent);
-            base.Configure(pixelConfig);
+            var pictureConfig = new PictureConfig(this, width, height, colorDefault, colorHover, layerMask, parent);
+            base.Configure(pictureConfig);
             Send($"{ this.GetName() } was configured by default!");
         }
 
 
-        public override IPixel GetPixel(Vector3 position)
+        protected override IPixel GetPixel(Vector3 position)
         {
             var pixel = Pixel2D.Get();
             var pixelParent = GetTransform();
-            var pixelConfig = new PixelConfig(pixel, position, m_PixelColorDefault, m_PixelColorHover, m_LayerMask, pixelParent);
+            var pixelConfig = new PixelConfig(pixel, position, ColorBackground, ColorHover, LayerMask, pixelParent);
             pixel.Configure(pixelConfig);
+            pixel.Init();
 
             return pixel;
         }

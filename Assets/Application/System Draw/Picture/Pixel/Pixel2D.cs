@@ -72,7 +72,7 @@ namespace APP.Draw
 
 
 
-        public void OnSelected(bool selected)
+        public override void OnSelected(bool selected)
         {
             if (selected == true)
             {
@@ -86,7 +86,7 @@ namespace APP.Draw
             SetColor(ColorDefault);
         }
 
-        public void OnHovered(bool hovered)
+        public override void OnHovered(bool hovered)
         {
             if (hovered == true)
             {
@@ -114,25 +114,6 @@ namespace APP.Draw
             
         }
 
-        
-        
-        
-
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         
         
         // FACTORY //

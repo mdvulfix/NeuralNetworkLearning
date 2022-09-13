@@ -52,8 +52,15 @@ namespace APP.Draw
             base.Configure(args);
         }
 
-
+        
+        public abstract void OnSelected(bool selected);
+        public abstract void OnHovered(bool hovered);
+        
         protected abstract void SetColor(Color color);
+
+
+
+
 
 
 

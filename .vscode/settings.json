@@ -127,11 +127,11 @@
                     "settings": 
                     {
                         //"foreground": "#B274AA",
-                        "foreground": "#ffbcff",
+                        //"foreground": "#ffbcff",
                         //"foreground": "#ffff00",
                         //"foreground": "#ffffff",
                         //"foreground": "#00ffff",
-                        "fontStyle": "italic"
+                        "fontStyle": ""
                     }
                     
                 }

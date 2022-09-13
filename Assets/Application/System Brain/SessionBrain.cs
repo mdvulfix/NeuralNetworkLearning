@@ -3,49 +3,105 @@ using UCamera = UnityEngine.Camera;
 
 
 using APP.Brain;
+using APP.Input;
+using APP.Draw;
 
 namespace APP
 {
     
-    public class SessionBrain : AConfigurableOnAwake, IConfigurable, IUpdateble
+    public class SessionBrain : ModelLoadable, IUpdateble
     {
         
         [SerializeField] private Transform m_Scene;
-        [SerializeField] private IRecognizable m_Picture;
-        [SerializeField] private IBrain m_Brain;
+        [SerializeField] private UCamera m_CameraMain;
+        
+        private InputController m_InputController;
+        private PencilController m_PencilController;        
+        private PictureController m_PictureController;
+        private BrainController m_BrainController;
 
-        public static SceneRootData m_SceneRootData;
+        public override void Load()
+        {
+            // CONFIGURE ON LOAD //
+            var config =  new SessionConfig();
+            Configure(config);
 
-
+            base.Load();
+        }
+        
+        
         public override void Configure(params object[] args)
         {
-            if (IsConfigured == true)
+            if(VerifyOnConfigure())
                 return;
+            
+            var config = args.Length > 0 ? 
+            (SessionConfig)args[PARAMS_Config] : 
+            default(SessionConfig);
 
-            if (args.Length > 0)
+            if(m_CameraMain == null)
             {
-                base.Configure(args);
+                Send($"{ m_CameraMain.GetName()} is not set!", LogFormat.Warning);
                 return;
             }
-                
-            var config = new SessionConfig();
-            base.Configure(config);
+            
+            if(m_Scene == null)
+            {
+                Send($"{ m_Scene.GetName()} is not set!", LogFormat.Warning);
+                return;
+            }
+            
+
+            base.Configure(args);
         }
 
 
         public override void Init()
         {
-            m_SceneRootData = new SceneRootData(m_Scene);
             
-            m_Brain = BrainModel.Get<BrainDefault>();
+            m_InputController = InputController.Get();
+            var inputControllerConfig = new InputControllerConfig(m_CameraMain);
+            m_InputController.Configure(inputControllerConfig);
+            m_InputController.Init();
             
-            //TODO: Add picture!
-            m_Picture = null;
+            var colorBackground= Color.black;
+            var colorHover = Color.grey;
+            var colorDraw = Color.green;
+
+            var pictureWidht = 10;
+            var pictureHeight = 10;
+            var picturLayerMask = 8;
+            var picture = Picture3D.Get();
+            var pictureConfig = new PictureConfig(picture, pictureWidht, pictureHeight, colorBackground, colorHover, picturLayerMask, m_Scene);
+            picture.Configure(pictureConfig);
             
-            var brainConfig = new BrainConfig(m_Brain, m_Picture);
             
-            m_Brain.Configure(brainConfig);
-            m_Brain.Init();
+            m_PictureController = PictureController.Get();
+            var pictureControllerConfig = new PictureControllerConfig(picture);
+            m_PictureController.Configure(pictureControllerConfig);
+            m_PictureController.Init();
+            
+            
+            var pencil = PencilModel.Get();
+            var pencilConfig = new PencilConfig(pencil, colorDraw, colorBackground);
+            pencil.Configure(pencilConfig);
+            
+            m_PencilController = PencilController.Get();
+            var pencilControllerConfig = new PencilControllerConfig(pencil);
+            m_PencilController.Configure(pencilControllerConfig);
+            m_PencilController.Init();
+            
+            var nerveLayerMask = 9;
+            var brain = BrainModel.Get();
+            
+            var brainConfig = new BrainConfig(brain, nerveLayerMask);
+            brain.Configure(brainConfig);
+            
+            m_BrainController = BrainController.Get();
+            var brainControllerConfig = new BrainControllerConfig(brain, picture);
+            m_BrainController.Configure(brainControllerConfig);
+            m_BrainController.Init();
+
 
             base.Init();
         }
@@ -53,9 +109,11 @@ namespace APP
 
         public override void Dispose()
         {
-            
-            m_Brain.Dispose();
-            
+            m_BrainController.Dispose();
+            m_PencilController.Dispose();
+            m_PictureController.Dispose();
+            m_InputController.Dispose();
+        
             base.Dispose();
         }
 
@@ -63,32 +121,13 @@ namespace APP
 
         public void Update()
         {
-
-
+            m_InputController.Update();
         }
-
-        
-        
-        public static SceneRootData GetSceneRootData() =>
-            m_SceneRootData;
-
     }
 
     public struct SessionConfig : IConfig
     {
 
     
-    }
-
-    public struct SceneRootData
-    {
-        public SceneRootData(Transform scene)
-        {
-            Scene = scene;
-            //Brain = brain;
-        }
-
-        public Transform Scene { get; private set; }
-        //public Transform Brain { get; private set; }
     }
 }

@@ -22,7 +22,7 @@ namespace APP.Input
         private Color m_PointerColorSelected;
         private Color m_PointerColorUnselected;
 
-        private Vector3 m_PointPosition;
+        private Vector3 m_PointPositionOnHover;
 
 
         public IPointer Pointer { get; private set; }
@@ -91,6 +91,9 @@ namespace APP.Input
 
         private void HandleHover()
         {
+            if(Pointer.Position == m_PointPositionOnHover)
+                return;
+            
             if (GetSelectable(m_SelectableLayer, out var selectable))
             {
                 if (m_IsHovered != null && m_IsHovered != selectable)
@@ -103,6 +106,8 @@ namespace APP.Input
                 
                 m_IsHovered = selectable;
                 m_IsHovered.OnHovered(true);
+
+                m_PointPositionOnHover = Pointer.Position;
             }
         }
 
@@ -147,7 +152,7 @@ namespace APP.Input
         {
             var position = camera.ScreenToWorldPoint(mousePosition);
             position = new Vector3(position.x, position.y, -1);
-            Pointer.SetPosition(position);
+            Pointer.SetPosition(position);            
         }
 
         private bool GetSelectable(int targetLayer, out ISelectable selectable)
@@ -157,10 +162,7 @@ namespace APP.Input
             if (Physics.Raycast(Pointer.Position, Vector3.forward, out var hit, 100, targetLayer))
             {
                 if (hit.collider.TryGetComponent<ISelectable>(out selectable))
-                {
-                    Send($"Hit {hit.transform.name}!");
                     return true;
-                }
             }
 
             return false;
