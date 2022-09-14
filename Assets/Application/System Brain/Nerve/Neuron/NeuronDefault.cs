@@ -17,6 +17,18 @@ namespace APP.Brain
             => Configure(args);
 
 
+        public override void Load()
+        { 
+            if (VerifyOnLoad())
+                return;
+            
+            Configure();
+            Init();
+            Activate();
+
+            base.Load();
+        }
+
         public override void Configure(params object[] args)
         {
             if (VerifyOnConfigure())
@@ -69,7 +81,7 @@ namespace APP.Brain
     {
         private NeuronDefault GetNeuronDefault(params object[] args)
         {       
-            var prefabPath = $"{NeuronModel.PREFAB_Folder}/{NeuronDefault.PREFAB_Label}";
+            var prefabPath = $"{NerveModel.PREFAB_Folder}/{NeuronDefault.PREFAB_Label}";
             var prefab = Resources.Load<GameObject>(prefabPath);
             
             var obj = (prefab != null) ? 

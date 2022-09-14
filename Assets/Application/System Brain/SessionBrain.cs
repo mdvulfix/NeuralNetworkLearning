@@ -29,7 +29,6 @@ namespace APP
             base.Load();
         }
         
-        
         public override void Configure(params object[] args)
         {
             if(VerifyOnConfigure())
@@ -54,7 +53,6 @@ namespace APP
 
             base.Configure(args);
         }
-
 
         public override void Init()
         {
@@ -94,7 +92,7 @@ namespace APP
             var nerveLayerMask = 9;
             var brain = BrainModel.Get();
             
-            var brainConfig = new BrainConfig(brain, nerveLayerMask);
+            var brainConfig = new BrainConfig(brain, nerveLayerMask, m_Scene);
             brain.Configure(brainConfig);
             
             m_BrainController = BrainController.Get();
@@ -105,7 +103,6 @@ namespace APP
 
             base.Init();
         }
-
 
         public override void Dispose()
         {

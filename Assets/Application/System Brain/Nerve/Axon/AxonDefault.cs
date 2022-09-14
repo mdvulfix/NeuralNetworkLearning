@@ -37,7 +37,7 @@ namespace APP.Brain
             obj.SetActive(false);
 
             var instance = obj.AddComponent<AxonDefault>();
-            obj.name = $"Axon { instance.GetHashCode() } ";
+            obj.name = $"Axon";
 
             //var instance = new Pixel3D();
 

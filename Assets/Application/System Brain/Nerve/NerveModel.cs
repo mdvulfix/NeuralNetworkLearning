@@ -5,20 +5,23 @@ using UnityEngine;
 namespace APP.Brain
 {
     [Serializable]
-    public abstract class NerveModel: ModelCacheable
+    public abstract class NerveModel: ModelLoadable
     {
         private NerveConfig m_Config;
         
         [SerializeField] private float m_Size;
 
         private List<Сharge> m_СhargeReceived;
-        internal static readonly object PREFAB_Folder;
+        
 
         public INerve Nerve { get; private set; }
         public Vector3 Position { get => transform.position; private set => transform.position = value; }
         public float Size { get => m_Size; private set => m_Size = value; }
         public int LayerMask {get => gameObject.layer; private set => gameObject.layer = value; }
+        
         public Transform Parent { get => transform.parent; private set { if(value != null) transform.SetParent(value); } }
+
+        public static readonly string PREFAB_Folder = "Prefab";
 
         public override void Configure(params object[] args)
         {
@@ -35,17 +38,25 @@ namespace APP.Brain
             LayerMask = m_Config.LayerMask;
             Parent = m_Config.Parent;
 
-            
-            
-            
             base.Configure(args);
         }
 
-        
-        
-        
+        public override void Init()
+        {
+            if(VerifyOnInit())
+                return;
 
-        
+            base.Init();
+        }
+
+        public override void Dispose()
+        {
+            
+            
+            base.Dispose();
+        }
+
+
         public virtual void CargeCalculate()
         { 
             foreach (var charge in m_СhargeReceived)
@@ -56,8 +67,10 @@ namespace APP.Brain
 
         protected abstract void Impulse();
 
-        
-        
+        protected void SetSize(float value)
+            => Size = value;
+
+
         protected TNerve Sprout<TNerve>(Vector3 position, float size, Transform parent)
         where TNerve: INerve
         {

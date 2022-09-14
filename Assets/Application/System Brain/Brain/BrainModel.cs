@@ -25,6 +25,7 @@ namespace APP.Brain
 
         public IBrain Brain { get; private set; }
         public int LayerMask {get => gameObject.layer; private set => gameObject.layer = value; }
+        public Transform Parent { get => transform.parent; private set { if(value != null) transform.SetParent(value); } }
 
         public override void Configure(params object[] args)
         {
@@ -38,6 +39,7 @@ namespace APP.Brain
 
             Brain = m_Config.Instance;
             LayerMask = m_Config.LayerMask;
+            Parent = m_Config.Parent;
 
             base.Configure(args);
 
@@ -188,14 +190,16 @@ namespace APP.Brain
 
     public struct BrainConfig : IConfig
     {
-        public BrainConfig(IBrain instance, int layerMask)
+        public BrainConfig(IBrain instance, int layerMask, Transform parent)
         {
             Instance = instance;
             LayerMask = layerMask;
+            Parent = parent;
         }
 
         public IBrain Instance { get; private set; }
         public int LayerMask { get; private set; }
+        public Transform Parent { get; internal set; }
     }
 
 

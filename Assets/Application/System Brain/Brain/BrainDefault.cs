@@ -33,7 +33,7 @@ namespace APP.Brain
                 parent = scenes[0].Scene;
 
             var layerMask = 9;
-            var brainConfig = new BrainConfig(this, layerMask);
+            var brainConfig = new BrainConfig(this, layerMask, parent);
             base.Configure(brainConfig);
             Send($"{this.GetName()} was configured by default!");
 

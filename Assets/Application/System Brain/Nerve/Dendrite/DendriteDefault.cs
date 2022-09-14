@@ -141,7 +141,7 @@ namespace APP.Brain
             obj.SetActive(false);
 
             var instance = obj.AddComponent<DendriteDefault>();
-            obj.name = $"Dendrite { instance.GetHashCode() } ";
+            obj.name = $"Dendrite";
 
             //var instance = new Pixel3D();
 

@@ -5,10 +5,6 @@ using UnityEngine;
 namespace APP.Brain
 {
     [Serializable]
-    [RequireComponent(typeof(MeshFilter))]
-    [RequireComponent(typeof(MeshRenderer))]
-    [RequireComponent(typeof(SphereCollider))]
-    //[RequireComponent(typeof(Rigidbody))]
     public abstract class NeuronModel : NerveModel  
     {
         private NeuronConfig m_Config;
@@ -16,7 +12,6 @@ namespace APP.Brain
         private bool m_IsGrowing = false;
         private bool m_IsMoving = false;
 
-        [SerializeField] private float m_Size;
         [Range(0, 2)] private float m_SizeChangeRate = 1;
         private float m_SizeDefault = 50;
         private float m_SizeDivide = 100;
@@ -47,7 +42,7 @@ namespace APP.Brain
 
         public INeuron Neuron { get; private set; }
         public float Energy { get => m_Energy; private set => m_Energy = value; }
-
+        
         
         public event Action<INeuron> Divided;
         public event Action<INeuron> Dead;
@@ -79,6 +74,9 @@ namespace APP.Brain
 
         public override void Init()
         {
+            if(VerifyOnInit())
+                return;
+
             var parent = GetTransform();
             
             m_Axon = Sprout<AxonDefault>(Position, Size, parent);
@@ -89,6 +87,40 @@ namespace APP.Brain
             base.Init();
         }
 
+        public override void Dispose()
+        {
+            m_Axon.Dispose();
+
+            foreach (var dendrite in m_Dendrites)
+                dendrite.Dispose();
+
+
+            m_Dendrites.Clear();
+            base.Dispose();
+        }
+
+        public override void Activate()
+        {
+            if(VerifyOnActivate())
+                return;
+
+            m_Axon.Activate();
+
+            foreach (var dendrite in m_Dendrites)
+                dendrite.Activate();
+
+            base.Activate();
+        }
+
+        public override void Deactivate()
+        {
+            m_Axon.Deactivate();
+
+            foreach (var dendrite in m_Dendrites)
+                dendrite.Deactivate();
+            
+            base.Deactivate();
+        }
 
         public ISensor GetSensor()
         {
@@ -139,9 +171,11 @@ namespace APP.Brain
                     m_SizeChangeRate = 1;
             }
 
-            m_Size += m_Size * m_SizeChangeRate;
+            var sizeValue = Size;
+            sizeValue += sizeValue * m_SizeChangeRate;
+            SetSize(sizeValue);
 
-            if (m_Size >= m_SizeDivide)
+            if (Size >= m_SizeDivide)
                 Divide();
         }
 
@@ -173,8 +207,9 @@ namespace APP.Brain
 
         private void Divide()
         {
-            m_Size /= 2;
-            m_Energy /= 2;
+            var sizeValue = Size;
+            SetSize(sizeValue /= 2);
+            Energy /= 2;
 
             Divided?.Invoke(Neuron);
         }
@@ -226,7 +261,7 @@ namespace APP.Brain
             LayerMask = layerMask;
             Parent = parent;
         
-            NerveConfig = new NerveConfig(Instance, Position, Size, LayerMask, Instance.GetTransform());
+            NerveConfig = new NerveConfig(Instance, Position, Size, LayerMask, Parent);
         }
 
         public INeuron Instance { get; private set; }

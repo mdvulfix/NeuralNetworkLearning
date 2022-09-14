@@ -10,12 +10,13 @@ namespace APP
 
         [SerializeField] private bool m_IsDebug = true;
         [SerializeField] private bool m_IsDebugOnLoad = true;
+        [SerializeField] private bool m_IsDebugOnRecord = true;
         [SerializeField] private bool m_IsDebugOnConfigure = true;
         [SerializeField] private bool m_IsDebugOnActivate = true;
 
         [SerializeField] private bool m_IsLoaded;
-        
-        
+
+
         [SerializeField] private bool m_IsConfigured;
         [SerializeField] private bool m_IsInitialized;
         [SerializeField] private bool m_IsActivated;
@@ -29,8 +30,11 @@ namespace APP
         public event Action<IMessage> Message;
 
         // LOAD //
-        public virtual void Load() => OnLoadComplete(isDebag: m_IsDebugOnLoad); 
-            
+        public virtual void Load() => OnLoadComplete(isDebag: m_IsDebugOnLoad);
+
+        // CACHE //
+        public virtual void Record() => OnRecordComplete(isDebag: m_IsDebugOnRecord);
+        public virtual void Clear() => OnClearComplete(isDebag: m_IsDebugOnRecord);
 
         // CONFIGURE //
         public virtual void Configure(params object[] args) => OnConfigureComplete(isDebag: m_IsDebugOnConfigure);
@@ -49,7 +53,7 @@ namespace APP
 
         public IMessage Send(string text, LogFormat format = LogFormat.None)
             => Send(new Message(this, text, format));
-             
+
         public IMessage Send(IMessage message, bool isDebag)
         {
             Message?.Invoke(message);
@@ -67,9 +71,27 @@ namespace APP
             => transform;
 
 
-        // VERIFY //        
+        // VERIFY //  
+        protected virtual bool VerifyOnLoad()
+        {
+            if (m_IsLoaded == true)
+            {
+                Send($"Instance is already loaded.", LogFormat.Warning);
+                return true;
+            }
+            return false;
+        }
+
         protected virtual bool VerifyOnConfigure()
         {
+            if (m_IsLoaded == false)
+            {
+                Send($"Instance is not loaded.", LogFormat.Warning);
+                Send($"Configuration was aborted!", LogFormat.Warning);
+
+                return true;
+            }
+            
             if (m_IsConfigured == true)
             {
                 Send($"Instance is already configured.", LogFormat.Warning);
@@ -96,10 +118,10 @@ namespace APP
 
             return false;
         }
-        
+
         protected virtual bool VerifyOnActivate()
         {
-            if (m_IsInitialized== false)
+            if (m_IsInitialized == false)
             {
                 Send($"Instance is not initialized.", LogFormat.Warning);
                 Send($"Activation was aborted!", LogFormat.Warning);
@@ -119,50 +141,65 @@ namespace APP
         // CALLBACK //
         protected virtual void OnLoadComplete(bool isDebag)
         {
-            m_IsLoaded = true; 
+            m_IsLoaded = true;
             Send($"Load complete.", isDebag);
         }
 
+
+        protected virtual void OnRecordComplete(bool isDebag)
+        {
+            m_IsActivated = true;
+            Send("The instance is written to the cache.", isDebag);
+        }
+
+        protected virtual void OnClearComplete(bool isDebag)
+        {
+            m_IsActivated = false;
+            Send("The instance was cleared from the cache.", isDebag);
+        }
+
+
         protected virtual void OnConfigureComplete(bool isDebag)
         {
-            m_IsConfigured = true; 
+            m_IsConfigured = true;
             Send("Configure complete.", isDebag);
         }
-        
+
         protected virtual void OnInitComplete(bool isDebag)
         {
-            m_IsInitialized = true; 
+            m_IsInitialized = true;
             Send("Initialize complete.", isDebag);
         }
-        
+
         protected virtual void OnDisposeComplete(bool isDebag)
         {
             m_IsInitialized = false;
-            Send("Dispose complete.", isDebag); 
+            Send("Dispose complete.", isDebag);
         }
-        
+
+
         protected virtual void OnActivatedComplete(bool isDebag)
         {
             m_IsActivated = true;
-            Send("Activated complete.", isDebag); 
+            Send("Activated complete.", isDebag);
         }
-        
+
         protected virtual void OnDeactivatedComplete(bool isDebag)
         {
             m_IsActivated = false;
-            Send("Deactivated complete.", isDebag); 
+            Send("Deactivated complete.", isDebag);
         }
-        
-        
+
+
         public void OnMessage(IMessage message) =>
             Send($"{message.Sender}: {message.Text}", message.LogFormat);
 
-        
-    
+
+
         // UNITY //
-        private void Awake() => Load();
-        private void OnEnable() => Init();
-        private void OnDisable() => Dispose();
+        private void Awake() { Load(); }
+        private void OnEnable() { Record(); Init(); } 
+        private void OnDisable() { Clear(); Dispose(); } 
     }
 
 

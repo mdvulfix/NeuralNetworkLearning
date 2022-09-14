@@ -90,7 +90,7 @@ namespace APP.Brain
             obj.SetActive(false);
 
             var instance = obj.AddComponent<SensorDefault>();
-            obj.name = $"Sensor { instance.GetHashCode() } ";
+            obj.name = $"Sensor";
 
             //var instance = new Pixel3D();
 
