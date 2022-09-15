@@ -1,12 +1,22 @@
 using UnityEngine;
+using URandom = UnityEngine.Random;
 
 namespace APP
 {
-    public class HandlerVector
+    public static class HandlerVector
     {
-        public float X { get; set; }
-        public float Y { get; set; }
-        public float Z { get; set; }
+        public static float X { get; set; }
+        public static float Y { get; set; }
+        public static float Z { get; set; }
         
+    
+        public static Vector3 GetRandomVector(float min, float max)
+        {
+            X = URandom.Range(min, max);
+            Y = URandom.Range(min, max);
+            Z = URandom.Range(min, max);
+
+            return new Vector3(X, Y, Z);
+        }
     }
 }

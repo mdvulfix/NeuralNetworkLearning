@@ -5,13 +5,14 @@ using UnityEngine;
 namespace APP.Brain
 {
     [Serializable]
-    public abstract class NeuronModel : NerveModel  
+    public abstract class NeuronModel : ModelLoadable
     {
         private NeuronConfig m_Config;
-        
+
         private bool m_IsGrowing = false;
         private bool m_IsMoving = false;
 
+        [SerializeField] private float m_Size;
         [Range(0, 2)] private float m_SizeChangeRate = 1;
         private float m_SizeDefault = 50;
         private float m_SizeDivide = 100;
@@ -23,11 +24,22 @@ namespace APP.Brain
         private float m_EnergyDefault = 50;
         private float m_EnergyMax = 100;
 
-        [SerializeField] private float m_Speed;
-        [Range(0, 2)] private float m_SpeedChangeRate = 1;
-        private float m_SpeedDefault = 1;
+        [SerializeField] private float m_MoveSpeed = 0.1f;
+        [Range(0, 2)] private float m_MoveSpeedChangeRate = 1;
+        private float m_MoveSpeedDefault = 0.1f;
+        [SerializeField] private float m_MoveDistanceLimitDefault = 10;
+        [SerializeField] private float m_MoveDistanceLimit;
+        [SerializeField] private float m_MoveDistance;
+        private Vector3 m_PositionOnStart;
 
         [SerializeField] private Vector3 m_Direction;
+        [SerializeField] private Vector3 m_DirectionPrevious;
+        [SerializeField] private float m_DirectionCooldawnDefault = 5;
+        [SerializeField] private float m_DirectionCooldawn;
+        [SerializeField] private float m_DirectionChangeDurationDefault = 3;
+        [SerializeField] private float m_DirectionChangeDuration;
+        private float m_DirectionChangeElapsedTime;
+
 
         private float m_NeuronSizeDefault = 1f;
         private float m_DendriteWidtDefault = 0.5f;
@@ -38,28 +50,36 @@ namespace APP.Brain
 
         private Color m_ColorDefault = Color.white;
         private Color m_ColorHover = Color.green;
-        
+
 
         public INeuron Neuron { get; private set; }
+        public Vector3 Position { get => transform.position; private set => transform.position = value; }
+        public float Size { get => m_Size; private set => m_Size = value; }
         public float Energy { get => m_Energy; private set => m_Energy = value; }
-        
-        
+        public int LayerMask { get => gameObject.layer; private set => gameObject.layer = value; }
+
+        public Transform Parent { get => transform.parent; private set { if (value != null) transform.SetParent(value); } }
+
+
         public event Action<INeuron> Divided;
         public event Action<INeuron> Dead;
 
         public override void Configure(params object[] args)
         {
-            if(VerifyOnConfigure())
+            if (VerifyOnConfigure())
                 return;
 
             m_Config = args.Length > 0 ?
             (NeuronConfig)args[PARAMS_Config] :
             default(NeuronConfig);
-        
+
             Neuron = m_Config.Instance;
             Energy = m_Config.Energy;
+            Size = m_Config.Size;
+            Position = m_Config.Position;
+            LayerMask = m_Config.LayerMask;
+            Parent = m_Config.Parent;
 
-            
             //m_Collider.offset = Vector2.zero;
 
             //if (SceneObject.TryGetComponent<Rigidbody>(out m_Rigidbody) == false)
@@ -68,24 +88,54 @@ namespace APP.Brain
             //m_Rigidbody.useGravity = false;
 
 
-            base.Configure(m_Config.NerveConfig);
+            base.Configure(args);
 
         }
 
         public override void Init()
         {
-            if(VerifyOnInit())
+            if (VerifyOnInit())
                 return;
 
-            var parent = GetTransform();
-            
-            m_Axon = Sprout<AxonDefault>(Position, Size, parent);
+            m_PositionOnStart = Position;
+            m_Direction = HandlerVector.GetRandomVector(-2, 2);
+            m_DirectionPrevious = m_Direction;
 
             m_Dendrites = new List<IDendrite>();
-            m_Dendrites.Add(Sprout<DendriteDefault>(Position, Size, parent));
+
+            var parent = GetTransform();
+
+            var dendritePosition = new Vector3(Position.x - 1, Position.y, Position.z - 1);
+            var dendrite = Grow<DendriteDefault>(dendritePosition, Size, parent);
+            m_Dendrites.Add(dendrite);
+            SetLine(Color.yellow, Position, dendritePosition);
+
+            
+            dendritePosition = new Vector3(Position.x - 1, Position.y, Position.z - 1);
+            dendrite = Grow<DendriteDefault>(dendritePosition, Size, parent);
+            m_Dendrites.Add(dendrite);
+            Debug.DrawLine(Position, dendritePosition, Color.yellow);
+            //SetLine(Color.yellow, Position, dendritePosition);
+            
+
+            dendritePosition = new Vector3(Position.x - 1, Position.y, Position.z - 1);
+            dendrite = Grow<DendriteDefault>(dendritePosition, Size, parent);
+            m_Dendrites.Add(dendrite);
+            Debug.DrawLine(Position, dendritePosition, Color.yellow);
+            //SetLine(Color.yellow, Position, dendritePosition);
+
+
+            var axonPosition = new Vector3(Position.x + 1, Position.y, Position.z + 1);
+            m_Axon = Grow<AxonDefault>(axonPosition, Size, parent);
+            Debug.DrawLine(Position, axonPosition, Color.yellow);
+
+
 
             base.Init();
         }
+
+        
+
 
         public override void Dispose()
         {
@@ -99,9 +149,10 @@ namespace APP.Brain
             base.Dispose();
         }
 
+
         public override void Activate()
         {
-            if(VerifyOnActivate())
+            if (VerifyOnActivate())
                 return;
 
             m_Axon.Activate();
@@ -118,9 +169,14 @@ namespace APP.Brain
 
             foreach (var dendrite in m_Dendrites)
                 dendrite.Deactivate();
-            
+
             base.Deactivate();
         }
+
+
+
+
+
 
         public ISensor GetSensor()
         {
@@ -133,10 +189,22 @@ namespace APP.Brain
             }
 
             var parent = GetTransform();
-            var newDendrite = Sprout<DendriteDefault>(Position, Size, parent);
+            var newDendrite = Grow<DendriteDefault>(Position, Size, parent);
             newDendrite.GetSensor(out sensor);
 
             return sensor;
+        }
+
+        protected TNerve Grow<TNerve>(Vector3 position, float size, Transform parent)
+        where TNerve : INerve
+        {
+            var nerve = NerveModel.Get<TNerve>();
+            var nerveConfig = new NerveConfig(nerve, position, size, LayerMask, parent);
+
+            nerve.Configure(nerveConfig);
+            nerve.Init();
+
+            return nerve;
         }
 
 
@@ -171,9 +239,7 @@ namespace APP.Brain
                     m_SizeChangeRate = 1;
             }
 
-            var sizeValue = Size;
-            sizeValue += sizeValue * m_SizeChangeRate;
-            SetSize(sizeValue);
+            Size += Size * m_SizeChangeRate;
 
             if (Size >= m_SizeDivide)
                 Divide();
@@ -199,16 +265,28 @@ namespace APP.Brain
             m_Force = m_Energy * m_ForceChangeRate;
         }
 
-        private void MoveCalculate()
+        private void CalculateMove()
         {
-            //m_Rigidbody.velocity = (m_Direction * m_Speed) * Time.deltaTime;
-        }
+            m_DirectionCooldawn -= Time.deltaTime;
 
+            if (m_DirectionCooldawn <= 0)
+            {
+                m_DirectionChangeElapsedTime = 0;
+                m_DirectionChangeDuration = m_DirectionChangeDurationDefault;
+                m_DirectionPrevious = m_Direction;
+                m_DirectionCooldawn = m_DirectionCooldawnDefault;
+                m_Direction = HandlerVector.GetRandomVector(-2, 2);
+            }
+
+            m_DirectionChangeElapsedTime += Time.deltaTime;
+            var percentageComplite = m_DirectionChangeElapsedTime / m_DirectionChangeDuration;
+            Position += Vector3.Lerp(m_DirectionPrevious, m_Direction, Mathf.SmoothStep(0, 1, percentageComplite)) * m_MoveSpeed * Time.deltaTime;
+        }
 
         private void Divide()
         {
-            var sizeValue = Size;
-            SetSize(sizeValue /= 2);
+
+            Size /= 2;
             Energy /= 2;
 
             Divided?.Invoke(Neuron);
@@ -223,30 +301,55 @@ namespace APP.Brain
 
 
 
-        public void Update()
+        public virtual void Update()
         {
-            EnergyCalculate();
-            SizeCalculate();
-            ForceCalculate();
-            MoveCalculate();
+            Debug.DrawLine(Position, m_Axon.Position, Color.yellow);
+
+            foreach (var dendrite in m_Dendrites)
+                Debug.DrawLine(Position, dendrite.Position, Color.yellow);
+
+
+            //EnergyCalculate();
+            //SizeCalculate();
+            //ForceCalculate();
+            CalculateMove();
+
+
 
         }
+
+        protected abstract void SetLine(Color color, params Vector3[] positions);
 
         // FACTORY //
         public static NeuronDefault Get(params object[] args)
             => Get<NeuronDefault>(args);
-        
+
+        // FACTORY //
+        public static TNeuron Get<TNeuron>(params object[] args)
+        where TNeuron : INeuron
+        {
+            IFactory factoryCustom = null;
+
+            if (args.Length > 0)
+                try { factoryCustom = (IFactory)args[PARAMS_Factory]; } catch { Debug.Log("Custom factory not found! The instance will be created by default."); }
+
+
+            var factory = (factoryCustom != null) ? factoryCustom : new NeuronFactory();
+            var instance = factory.Get<TNeuron>(args);
+
+            return instance;
+        }
 
     }
 
 
-    public interface INeuron : INerve
+    public interface INeuron : IConfigurable, IActivable
     {
         event Action<INeuron> Divided;
         event Action<INeuron> Dead;
 
         ISensor GetSensor();
-   
+
 
     }
 
@@ -260,8 +363,8 @@ namespace APP.Brain
             Position = position;
             LayerMask = layerMask;
             Parent = parent;
-        
-            NerveConfig = new NerveConfig(Instance, Position, Size, LayerMask, Parent);
+
+            //NerveConfig = new NerveConfig(Instance, Position, Size, LayerMask, Parent);
         }
 
         public INeuron Instance { get; private set; }
@@ -270,9 +373,9 @@ namespace APP.Brain
         public Vector3 Position { get; private set; }
         public int LayerMask { get; private set; }
         public Transform Parent { get; private set; }
-        
-        public NerveConfig NerveConfig { get; private set; }
-    
+
+        //public NerveConfig NerveConfig { get; private set; }
+
     }
 
     public struct NeuronInfo
@@ -288,5 +391,13 @@ namespace APP.Brain
 
 
 
+    public partial class NeuronFactory : Factory<INeuron>
+    {
+        public NeuronFactory()
+        {
+            Set<NeuronDefault>(Constructor.Get((args) => GetNeuronDefault(args)));
+
+        }
+    }
 
 }

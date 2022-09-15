@@ -5,7 +5,7 @@ using UnityEngine;
 namespace APP.Brain
 {
     [Serializable]
-    public abstract class NerveModel: ModelLoadable
+    public abstract class NerveModel: ModelCacheable
     {
         private NerveConfig m_Config;
         
@@ -13,6 +13,20 @@ namespace APP.Brain
 
         private List<Сharge> m_СhargeReceived;
         
+        private float m_MoveSpeedDefault = 0.05f;
+        [SerializeField] private float m_MoveSpeed = 0.05f;
+        [Range(0, 2)] private float m_MoveSpeedChangeRate = 1;
+        private float m_MoveDistanceLimit = 2;
+        
+        [SerializeField] private Vector3 m_Direction;
+        [SerializeField] private Vector3 m_DirectionPrevious;
+        [SerializeField] private float m_DirectionCooldawnDefault = 5;
+        private float m_DirectionCooldawn;
+        [SerializeField] private float m_DirectionChangeDurationDefault = 3;
+        [SerializeField] private float m_DirectionChangeDuration;
+        private float m_DirectionChangeElapsedTime;
+
+
 
         public INerve Nerve { get; private set; }
         public Vector3 Position { get => transform.position; private set => transform.position = value; }
@@ -65,13 +79,51 @@ namespace APP.Brain
             }
         }
 
+
+        public virtual void Update()
+        {
+
+
+            //EnergyCalculate();
+            //SizeCalculate();
+            //ForceCalculate();
+            CalculateMove();
+
+
+
+        }
+
+
+
+
+
+
+
         protected abstract void Impulse();
 
         protected void SetSize(float value)
             => Size = value;
 
+        private void CalculateMove()
+        {
+            m_DirectionCooldawn -= Time.deltaTime;
 
-        protected TNerve Sprout<TNerve>(Vector3 position, float size, Transform parent)
+            if (m_DirectionCooldawn <= 0)
+            {
+                m_DirectionChangeElapsedTime = 0;
+                m_DirectionChangeDuration = m_DirectionChangeDurationDefault;
+                m_DirectionPrevious = m_Direction;
+                m_DirectionCooldawn = m_DirectionCooldawnDefault;
+                m_Direction = HandlerVector.GetRandomVector(-2, 2);
+            }
+
+            m_DirectionChangeElapsedTime += Time.deltaTime;
+            var percentageComplite = m_DirectionChangeElapsedTime / m_DirectionChangeDuration;
+            Position += Vector3.Lerp(m_DirectionPrevious, m_Direction, Mathf.SmoothStep(0, 1, percentageComplite)) * m_MoveSpeed * Time.deltaTime;
+        }
+
+
+        protected TNerve Grow<TNerve>(Vector3 position, float size, Transform parent)
         where TNerve: INerve
         {
             var nerve = NerveModel.Get<TNerve>();
@@ -82,10 +134,6 @@ namespace APP.Brain
             
             return nerve;
         }
-        
-        
-        
-        
         
         
         // FACTORY //
@@ -108,7 +156,7 @@ namespace APP.Brain
 
     public interface INerve: IConfigurable, IActivable
     {
-        
+        Vector3 Position { get; }
     }
 
     public class NerveConfig
@@ -133,7 +181,6 @@ namespace APP.Brain
     {
         public NerveFactory()
         {
-            Set<NeuronDefault>(Constructor.Get((args) => GetNeuronDefault(args)));
             Set<AxonDefault>(Constructor.Get((args) => GetAxonDefault(args)));
             Set<DendriteDefault>(Constructor.Get((args) => GetDendriteDefault(args)));
             Set<SensorDefault>(Constructor.Get((args) => GetSensorDefault(args)));

@@ -29,9 +29,11 @@ namespace APP.Brain
             m_Sensors = new List<ISensor>(); 
             
             var parent = GetTransform();
-            var sensor = Sprout<SensorDefault>(Position, Size, parent);  
-            sensor.Excited += OnSensorExcited;        
             
+            var sensorPosition = new Vector3(Position.x - 0.25f, Position.y, Position.z - 0.25f);
+            var sensor = Grow<SensorDefault>(sensorPosition, Size, parent);  
+            sensor.Excited += OnSensorExcited;        
+            Debug.DrawLine(Position, sensorPosition, Color.yellow);
             m_Sensors.Add(sensor);
         
             base.Init();
@@ -67,7 +69,15 @@ namespace APP.Brain
         }
         
         
-    
+        public override void Update() 
+        {
+            foreach (var sensor in m_Sensors)
+                Debug.DrawLine(Position, sensor.Position, Color.yellow);
+            
+            base.Update();
+        }
+
+
         public bool GetSensor(out ISensor sensor)
         {
             sensor = null;
@@ -84,7 +94,7 @@ namespace APP.Brain
             if(m_Sensors.Count < LimitCalculate())
             {
                 var parent = GetTransform();
-                sensor = Sprout<SensorDefault>(Position, Size, parent);
+                sensor = Grow<SensorDefault>(Position, Size, parent);
                 sensor.Excited += OnSensorExcited;
                 sensor.Activate();
                 return true;

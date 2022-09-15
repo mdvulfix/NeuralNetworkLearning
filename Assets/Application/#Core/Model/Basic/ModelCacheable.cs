@@ -99,12 +99,6 @@ namespace APP
                 return true;
             }
 
-            if (m_IsActivated == true)
-            {
-                Send($"Instance is already activated.", LogFormat.Warning);
-                return true;
-            }
-
             return false;
         }
 

@@ -18,7 +18,7 @@ namespace APP.Brain
 
     }
 
-    public interface IAxon: INerve, ISensible
+    public interface IAxon: INerve
     {
         
     }

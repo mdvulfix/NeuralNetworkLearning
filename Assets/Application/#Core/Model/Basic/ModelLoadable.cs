@@ -43,8 +43,26 @@ namespace APP
 
 
         // ACTIVATE //
-        public virtual void Activate() => OnActivatedComplete(isDebag: m_IsDebugOnActivate);
-        public virtual void Deactivate() => OnDeactivatedComplete(isDebag: m_IsDebugOnActivate);
+        public virtual void Activate()
+        {
+            if (VerifyOnActivate())
+                return;
+
+            var obj = gameObject;
+
+            try { obj.SetActive(true); OnActivatedComplete(isDebag: m_IsDebugOnActivate); }
+            catch (Exception exception) { Send($"Activation failed. Exeption {exception.Message}", LogFormat.Warning); }
+
+        }
+
+        public virtual void Deactivate()
+        {
+            var obj = gameObject;
+
+            try { obj.SetActive(false); OnActivatedComplete(isDebag: m_IsDebugOnActivate); }
+            catch (Exception exception) { Send($"Activation failed. Exeption {exception.Message}", LogFormat.Warning); }
+
+        }
 
 
         // MESSAGE //
@@ -83,15 +101,7 @@ namespace APP
         }
 
         protected virtual bool VerifyOnConfigure()
-        {
-            if (m_IsLoaded == false)
-            {
-                Send($"Instance is not loaded.", LogFormat.Warning);
-                Send($"Configuration was aborted!", LogFormat.Warning);
-
-                return true;
-            }
-            
+        {            
             if (m_IsConfigured == true)
             {
                 Send($"Instance is already configured.", LogFormat.Warning);
@@ -129,12 +139,6 @@ namespace APP
                 return true;
             }
 
-            if (m_IsActivated == true)
-            {
-                Send($"Instance is already activated.", LogFormat.Warning);
-                return true;
-            }
-
             return false;
         }
 
@@ -144,7 +148,6 @@ namespace APP
             m_IsLoaded = true;
             Send($"Load complete.", isDebag);
         }
-
 
         protected virtual void OnRecordComplete(bool isDebag)
         {
@@ -157,7 +160,6 @@ namespace APP
             m_IsActivated = false;
             Send("The instance was cleared from the cache.", isDebag);
         }
-
 
         protected virtual void OnConfigureComplete(bool isDebag)
         {
@@ -176,7 +178,6 @@ namespace APP
             m_IsInitialized = false;
             Send("Dispose complete.", isDebag);
         }
-
 
         protected virtual void OnActivatedComplete(bool isDebag)
         {
@@ -197,9 +198,28 @@ namespace APP
 
 
         // UNITY //
-        private void Awake() { Load(); }
-        private void OnEnable() { Record(); Init(); } 
-        private void OnDisable() { Clear(); Dispose(); } 
+        private void Awake() 
+        { 
+            Load();
+            Configure();    
+        }
+        
+        private void OnEnable() 
+        { 
+            Record(); 
+            Init(); 
+        } 
+        
+        private void Start() 
+        {
+            Activate();
+        }
+        
+        private void OnDisable() 
+        { 
+            Dispose();
+            Clear(); 
+        } 
     }
 
 

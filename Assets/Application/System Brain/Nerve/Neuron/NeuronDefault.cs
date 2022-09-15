@@ -7,7 +7,8 @@ namespace APP.Brain
 
     public class NeuronDefault : NeuronModel, INeuron
     {
-        private MeshRenderer m_Renderer;
+        private MeshRenderer m_MeshRenderer;
+        private LineRenderer m_LineRenderer;
         private SphereCollider m_Collider;
         
         public static readonly string PREFAB_Label = "Neuron";
@@ -22,10 +23,26 @@ namespace APP.Brain
             if (VerifyOnLoad())
                 return;
             
-            Configure();
-            Init();
-            Activate();
 
+            
+            // CONFIGURE BY DEFAULT //
+            var position = Vector3.zero;
+            var size = URandom.Range(0f, 100f);
+            var energy = URandom.Range(0f, 100f);
+            var layerMask = 9;
+            
+            Transform parent = null;
+            if (Seacher.Find<IScene>(out var scenes))
+            {
+                var neuronParent = scenes[0].GetTransform();
+                parent = neuronParent != null ? neuronParent : transform.parent;
+            }
+
+            var config = new NeuronConfig(this, position, size, energy, layerMask, parent);
+
+            base.Configure(config);
+            Send($"The instance was configured on load!");
+                        
             base.Load();
         }
 
@@ -37,17 +54,22 @@ namespace APP.Brain
 
             var obj = gameObject;
 
-            if (obj.TryGetComponent<MeshRenderer>(out m_Renderer) == false)
-                m_Renderer = obj.AddComponent<MeshRenderer>();
+            if (obj.TryGetComponent<MeshRenderer>(out m_MeshRenderer) == false)
+                m_MeshRenderer = obj.AddComponent<MeshRenderer>();
             
-    
+            if (obj.TryGetComponent<LineRenderer>(out m_LineRenderer) == false)
+                m_LineRenderer = obj.AddComponent<LineRenderer>();
+
             if (obj.TryGetComponent<SphereCollider>(out m_Collider) == false)
                 m_Collider = obj.AddComponent<SphereCollider>();
 
+
             m_Collider.isTrigger = true;
+            
             
 
 
+            
             if (args.Length > 0)
             {
                 base.Configure(args);
@@ -70,14 +92,23 @@ namespace APP.Brain
             var config = new NeuronConfig(this, position, size, energy, layerMask, parent);
 
             base.Configure(config);
-            Send($"{this.GetName()} was configured by default!");
+            Send($"The instance was configured by default!");
         }
 
-        protected override void Impulse() { }
+        protected override void SetLine(Color color, params Vector3[] positions)
+        {
+            for (int i = 0; i < positions.Length; i++)
+                m_LineRenderer.SetPosition(i, positions[i]);
+ 
+            
+            
+        }
+
+        //protected override void Impulse() { }
 
     }
 
-    public partial class NerveFactory : Factory<INerve>
+    public partial class NeuronFactory : Factory<INeuron>
     {
         private NeuronDefault GetNeuronDefault(params object[] args)
         {       
