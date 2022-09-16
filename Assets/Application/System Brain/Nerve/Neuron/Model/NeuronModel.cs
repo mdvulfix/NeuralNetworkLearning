@@ -5,7 +5,7 @@ using UnityEngine;
 namespace APP.Brain
 {
     [Serializable]
-    public abstract class NeuronModel : ModelLoadable
+    public abstract class NeuronModel : ModelCacheable
     {
         private NeuronConfig m_Config;
 
@@ -50,7 +50,7 @@ namespace APP.Brain
 
         private Color m_ColorDefault = Color.white;
         private Color m_ColorHover = Color.green;
-
+        
 
         public INeuron Neuron { get; private set; }
         public Vector3 Position { get => transform.position; private set => transform.position = value; }
@@ -63,6 +63,8 @@ namespace APP.Brain
 
         public event Action<INeuron> Divided;
         public event Action<INeuron> Dead;
+
+        public static readonly string PREFAB_Folder ="Prefab";
 
         public override void Configure(params object[] args)
         {
@@ -103,32 +105,16 @@ namespace APP.Brain
 
             m_Dendrites = new List<IDendrite>();
 
-            var parent = GetTransform();
+            var parent = GetComponent<Transform>();
 
             var dendritePosition = new Vector3(Position.x - 1, Position.y, Position.z - 1);
             var dendrite = Grow<DendriteDefault>(dendritePosition, Size, parent);
             m_Dendrites.Add(dendrite);
-            SetLine(Color.yellow, Position, dendritePosition);
-
-            
-            dendritePosition = new Vector3(Position.x - 1, Position.y, Position.z - 1);
-            dendrite = Grow<DendriteDefault>(dendritePosition, Size, parent);
-            m_Dendrites.Add(dendrite);
-            Debug.DrawLine(Position, dendritePosition, Color.yellow);
-            //SetLine(Color.yellow, Position, dendritePosition);
-            
-
-            dendritePosition = new Vector3(Position.x - 1, Position.y, Position.z - 1);
-            dendrite = Grow<DendriteDefault>(dendritePosition, Size, parent);
-            m_Dendrites.Add(dendrite);
-            Debug.DrawLine(Position, dendritePosition, Color.yellow);
-            //SetLine(Color.yellow, Position, dendritePosition);
 
 
             var axonPosition = new Vector3(Position.x + 1, Position.y, Position.z + 1);
             m_Axon = Grow<AxonDefault>(axonPosition, Size, parent);
             Debug.DrawLine(Position, axonPosition, Color.yellow);
-
 
 
             base.Init();
@@ -188,7 +174,7 @@ namespace APP.Brain
                     return sensor;
             }
 
-            var parent = GetTransform();
+            var parent = GetComponent<Transform>();
             var newDendrite = Grow<DendriteDefault>(Position, Size, parent);
             newDendrite.GetSensor(out sensor);
 
@@ -304,6 +290,7 @@ namespace APP.Brain
         public virtual void Update()
         {
             Debug.DrawLine(Position, m_Axon.Position, Color.yellow);
+            UpdateBond(Color.yellow, Position, m_Axon.Position);
 
             foreach (var dendrite in m_Dendrites)
                 Debug.DrawLine(Position, dendrite.Position, Color.yellow);
@@ -318,11 +305,7 @@ namespace APP.Brain
 
         }
 
-        protected abstract void SetLine(Color color, params Vector3[] positions);
-
-        // FACTORY //
-        public static NeuronDefault Get(params object[] args)
-            => Get<NeuronDefault>(args);
+        protected abstract void UpdateBond(Color color, params Vector3[] positions);
 
         // FACTORY //
         public static TNeuron Get<TNeuron>(params object[] args)
@@ -343,7 +326,7 @@ namespace APP.Brain
     }
 
 
-    public interface INeuron : IConfigurable, IActivable
+    public interface INeuron : IConfigurable, IActivable, IUpdateble
     {
         event Action<INeuron> Divided;
         event Action<INeuron> Dead;
@@ -395,7 +378,8 @@ namespace APP.Brain
     {
         public NeuronFactory()
         {
-            Set<NeuronDefault>(Constructor.Get((args) => GetNeuronDefault(args)));
+            Set<NeuronInput>(Constructor.Get((args) => GetNeuronInput(args)));
+            Set<NeuronAnalyzer>(Constructor.Get((args) => GetNeuronAnalyzer(args)));
 
         }
     }

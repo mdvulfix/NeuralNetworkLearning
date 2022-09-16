@@ -59,11 +59,9 @@ namespace APP.Draw
             var layerMask = 8;
             
             Transform parent = null;
-            if(Seacher.Find<IPicture>(out var pictures))
-            {
-                var pictureParent = pictures[0].GetTransform();
-                parent = pictureParent != null ? pictureParent : transform.parent;
-            }
+            if (Seacher.Find<IPicture>(out var scenes))
+                if(scenes[0].GetComponent<Transform>(out var pictureParent))
+                    parent = pictureParent != null ? pictureParent : transform.parent;
                 
             var pixelConfig = new PixelConfig(this, position, backgroundColor, hoverColor, layerMask, parent);
             base.Configure(pixelConfig);

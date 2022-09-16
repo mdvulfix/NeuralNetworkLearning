@@ -15,6 +15,8 @@ namespace APP
         [SerializeField] private Transform m_Scene;
         [SerializeField] private UCamera m_CameraMain;
         
+        [SerializeField] private int m_InputFieldDimension = 10;
+        
         private InputController m_InputController;
         private PencilController m_PencilController;        
         private PictureController m_PictureController;
@@ -66,8 +68,8 @@ namespace APP
             var colorHover = Color.grey;
             var colorDraw = Color.green;
 
-            var pictureWidht = 10;
-            var pictureHeight = 10;
+            var pictureWidht = m_InputFieldDimension;
+            var pictureHeight = m_InputFieldDimension;
             var picturLayerMask = 8;
             var picture = Picture3D.Get();
             var pictureConfig = new PictureConfig(picture, pictureWidht, pictureHeight, colorBackground, colorHover, picturLayerMask, m_Scene);
@@ -91,8 +93,12 @@ namespace APP
             
             var nerveLayerMask = 9;
             var brain = BrainModel.Get();
+
+            var inputLayerDimension = m_InputFieldDimension;
+            var analyzeLayerDimension = m_InputFieldDimension/2;
+            var analyzeLayerNumber = 2;
             
-            var brainConfig = new BrainConfig(brain, nerveLayerMask, m_Scene);
+            var brainConfig = new BrainConfig(brain, inputLayerDimension, analyzeLayerDimension, analyzeLayerNumber, nerveLayerMask, m_Scene);
             brain.Configure(brainConfig);
             
             m_BrainController = BrainController.Get();
@@ -118,7 +124,9 @@ namespace APP
 
         public void Update()
         {
+            
             m_InputController.Update();
+            m_BrainController.Update();
         }
     }
 

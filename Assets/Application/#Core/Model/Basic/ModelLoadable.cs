@@ -1,9 +1,10 @@
 using System;
 using UnityEngine;
+using UComponent = UnityEngine.Component;
 
 namespace APP
 {
-    public abstract class ModelLoadable : MonoBehaviour, ILoadable, IConfigurable, IActivable, IMessager
+    public abstract class ModelLoadable : MonoBehaviour, IConfigurable, ILoadable, IActivable, IComponent, IMessager
     {
         public static readonly int PARAMS_Config = 0;
         public static readonly int PARAMS_Factory = 1;
@@ -20,12 +21,14 @@ namespace APP
         [SerializeField] private bool m_IsConfigured;
         [SerializeField] private bool m_IsInitialized;
         [SerializeField] private bool m_IsActivated;
+        [SerializeField] private bool m_IsAnimated;
 
 
         public bool IsLoaded => m_IsLoaded;
         public bool IsConfigured => m_IsConfigured;
         public bool IsInitialized => m_IsInitialized;
         public bool IsActivated => m_IsActivated;
+        public bool IsAnimated => m_IsAnimated;
 
         public event Action<IMessage> Message;
 
@@ -83,10 +86,6 @@ namespace APP
             Message?.Invoke(message);
             return Messager.Send(m_IsDebug, this, message.Text, message.LogFormat);
         }
-
-
-        public Transform GetTransform()
-            => transform;
 
 
         // VERIFY //  
@@ -192,16 +191,25 @@ namespace APP
         }
 
 
-        public void OnMessage(IMessage message) =>
-            Send($"{message.Sender}: {message.Text}", message.LogFormat);
+        public void OnMessage(IMessage message) 
+            => Send($"{message.Sender}: {message.Text}", message.LogFormat);
 
 
+        // COMPONENT //
+        public TComponent SetComponent<TComponent>()
+        where TComponent: UComponent
+            => gameObject.AddComponent<TComponent>();
 
+        public bool GetComponent<TComponent>(out TComponent component)
+        where TComponent: UComponent
+            => gameObject.TryGetComponent<TComponent>(out component);
+        
+        
         // UNITY //
         private void Awake() 
         { 
             Load();
-            Configure();    
+            Configure();   
         }
         
         private void OnEnable() 
@@ -220,27 +228,32 @@ namespace APP
             Dispose();
             Clear(); 
         } 
+
+        
+        
     }
 
 
 
     public interface ILoadable
     {       
-        bool IsLoaded { get; }
-        
         void Load();
-
-        Transform GetTransform();
     }
 
     public interface IActivable
     {        
-        bool IsActivated { get; }
-        
         void Activate();
         void Deactivate();
+    }
 
-        Transform GetTransform();
+    public interface IComponent
+    {       
+        TComponent SetComponent<TComponent>()
+        where TComponent: UComponent;
+
+        bool GetComponent<TComponent>(out TComponent component)
+        where TComponent: UComponent;
+
     }
 
 }

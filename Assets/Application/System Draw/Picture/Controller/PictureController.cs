@@ -50,7 +50,7 @@ namespace APP.Draw
         //public void Colorize(IPixel pixel, Color color, ColorMode mode = ColorMode.None) =>
         //    pixel.SetColor(color);
 
-
+        /*
         public IEnumerator AwaitLoadingAsync(IActivable activatable, float awaiting = 5f)
         {
             while (activatable.IsActivated == false && awaiting > 0)
@@ -59,7 +59,7 @@ namespace APP.Draw
                 awaiting -= Time.deltaTime;
             }
         }
-
+        */
         public static PictureController Get(params object[] args)
             => Get<PictureController>(args);
 

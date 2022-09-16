@@ -28,7 +28,7 @@ namespace APP.Brain
         {
             m_Sensors = new List<ISensor>(); 
             
-            var parent = GetTransform();
+            GetComponent<Transform>(out var parent);
             
             var sensorPosition = new Vector3(Position.x - 0.25f, Position.y, Position.z - 0.25f);
             var sensor = Grow<SensorDefault>(sensorPosition, Size, parent);  
@@ -93,7 +93,7 @@ namespace APP.Brain
                 
             if(m_Sensors.Count < LimitCalculate())
             {
-                var parent = GetTransform();
+                GetComponent<Transform>(out var parent);
                 sensor = Grow<SensorDefault>(Position, Size, parent);
                 sensor.Excited += OnSensorExcited;
                 sensor.Activate();

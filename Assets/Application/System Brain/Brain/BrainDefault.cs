@@ -8,6 +8,7 @@ namespace APP.Brain
 
     public class BrainDefault : BrainModel, IBrain
     {
+        
         public static readonly string PREFAB_Label = "Brain";
 
         public BrainDefault() { }
@@ -32,28 +33,40 @@ namespace APP.Brain
             if (Seacher.Find<IScene>(out var scenes))
                 parent = scenes[0].Scene;
 
+            var inputLayerSize = 4;
+            var analyzeLayerSize = 2;
+            var analyzeLayerNumber = 2;
             var layerMask = 9;
-            var brainConfig = new BrainConfig(this, layerMask, parent);
+            var brainConfig = new BrainConfig(this, inputLayerSize, analyzeLayerSize, analyzeLayerNumber, layerMask, parent);
             base.Configure(brainConfig);
             Send($"{this.GetName()} was configured by default!");
 
         }
 
-        protected override INeuron GetNeuron(Vector3 position)
+
+        public override void Recognize(IRecognizable recognizable)
         {
-            var neuron = NeuronModel.Get();
-            
-            var size = 0.5f;
-            var energy = 50;
-            var parent = GetTransform();
-
-            var neuronConfig = new NeuronConfig(neuron, position, size, energy, LayerMask, parent);
-            neuron.Configure(neuronConfig);
-            neuron.Init();
-            neuron.Activate();
-
-            return neuron;
+            var sensibles = recognizable.GetSensibles();
         }
+
+        public override void Analyze()
+        {
+
+        }
+
+        public override void Response()
+        {
+            
+        }
+
+        
+        protected override INeuron[,,] CreateInputLayer()
+            => CreateLayer<NeuronInput>(InputLayerDimension);
+
+
+        protected override INeuron[,,] CreateAnalyzeLayer() 
+            => CreateLayer<NeuronAnalyzer>(AnalyzeLayerDimension, AnalyzeLayerNumber);
+   
     }
 
     public partial class BrainFactory : Factory<IBrain>

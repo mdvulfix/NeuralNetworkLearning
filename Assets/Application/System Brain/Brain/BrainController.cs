@@ -7,17 +7,12 @@ using UnityEngine;
 namespace APP.Brain
 {
     [Serializable]
-    public class BrainController : ModelController, IController
+    public class BrainController : ModelController, IBrainController
     {
         private BrainControllerConfig m_Config;
 
-        
-
 
         public IRecognizable Recognizable {get; private set;}
-        
-        
-        
         public IBrain Brain {get; private set; }
         
         public BrainController() { }
@@ -48,7 +43,8 @@ namespace APP.Brain
 
             Brain.Init();
             Brain.Activate();
-            Brain.Recognize(Recognizable);
+            //Brain.Recognize(Recognizable);
+            //Brain.Analyze();
             
             
             base.Init();
@@ -61,24 +57,19 @@ namespace APP.Brain
             base.Dispose();
         }
 
-
-
-
         public void Update()
         {
-
-            
+            Brain.Update();
+            //Brain.Response();
         }
-
-        public void FixedUpdate()
-        {
-
-        }
-
-
         
         public static BrainController Get(params object[] args)
             => Get<BrainController>(args);
+
+    }
+
+    public interface IBrainController: IController, IUpdateble
+    {
 
     }
 

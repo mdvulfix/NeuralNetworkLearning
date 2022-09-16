@@ -154,7 +154,7 @@ namespace APP.Draw
         
     }
 
-    public interface IPicture: IConfigurable, ICacheable, IActivable, IMessager, IRecognizable
+    public interface IPicture: IConfigurable, ICacheable, IActivable, IComponent, IMessager, IRecognizable
     {
 
     }

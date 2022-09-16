@@ -44,7 +44,7 @@ namespace APP.Draw
         protected override IPixel GetPixel(Vector3 position)
         {
             var pixel = Pixel2D.Get();
-            var pixelParent = GetTransform();
+            GetComponent<Transform>(out var pixelParent);
             var pixelConfig = new PixelConfig(pixel, position, ColorBackground, ColorHover, LayerMask, pixelParent);
             pixel.Configure(pixelConfig);
             pixel.Init();

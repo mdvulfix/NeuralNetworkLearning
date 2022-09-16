@@ -15,7 +15,7 @@ namespace APP
         }
     }
 
-    public interface IScene: IActivable
+    public interface IScene: IActivable, ILoadable, IComponent
     {
         Transform Scene { get; }
     

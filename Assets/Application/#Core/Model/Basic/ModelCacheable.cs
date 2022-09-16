@@ -1,9 +1,10 @@
 using System;
 using UnityEngine;
+using UComponent = UnityEngine.Component;
 
 namespace APP
 {
-    public abstract class ModelCacheable : MonoBehaviour, IConfigurable, ICacheable, IActivable, IMessager
+    public abstract class ModelCacheable : MonoBehaviour, IConfigurable, ICacheable, IActivable, IComponent, IMessager
     {
         public static readonly int PARAMS_Config = 0;
         public static readonly int PARAMS_Factory = 1;
@@ -103,10 +104,6 @@ namespace APP
         }
 
 
-        public Transform GetTransform()
-            => transform;
-
-
         // MESSAGE //
         public IMessage Send(string text, bool isDebag, LogFormat format = LogFormat.None)
             => Send(new Message(this, text, format), isDebag);
@@ -173,6 +170,17 @@ namespace APP
             Send("The instance was cleared from the cache.", isDebag);
         }
 
+        // COMPONENT //
+        public TComponent SetComponent<TComponent>()
+        where TComponent: UComponent
+            => gameObject.AddComponent<TComponent>();
+
+        public bool GetComponent<TComponent>(out TComponent component)
+        where TComponent: UComponent
+            => gameObject.TryGetComponent<TComponent>(out component);
+
+
+        
         // UNITY //
         private void OnEnable() { Record(); }
         private void OnDisable() { Clear(); }

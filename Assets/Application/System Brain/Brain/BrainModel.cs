@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace APP.Brain
@@ -8,25 +10,23 @@ namespace APP.Brain
         private BrainConfig m_Config;
 
         private IEnumerable<ISensible> m_Sensibles;
-
+        
+        
         private List<INeuron> m_Neurons;
-        
-        
-        
-        private NeuronController m_NeuronController;
 
-        private INeuron[,,] m_LayerMatrixInput;
-        private INeuron[,,] m_LayerMatrixAnalize;
-
-
-        private Vector3Int m_MatrixSize;
-        private int m_MatrixDimension = 8;
-        internal static readonly object PREFAB_Folder;
 
         public IBrain Brain { get; private set; }
-        public int LayerMask {get => gameObject.layer; private set => gameObject.layer = value; }
-        public Transform Parent { get => transform.parent; private set { if(value != null) transform.SetParent(value); } }
+        public int InputLayerDimension { get; private set; }
+        public int AnalyzeLayerDimension { get; private set; }
+        public int AnalyzeLayerNumber { get; private set; }
+        public int LayerMask { get => gameObject.layer; private set => gameObject.layer = value; }
+        public Transform Parent { get => transform.parent; private set { if (value != null) transform.SetParent(value); } }
 
+        public INeuronController NeuronController { get; private set; }
+
+        public static readonly string PREFAB_Folder = "Preefab";
+
+        // CONFIGURE //
         public override void Configure(params object[] args)
         {
 
@@ -38,6 +38,11 @@ namespace APP.Brain
             default(BrainConfig);
 
             Brain = m_Config.Instance;
+            InputLayerDimension = m_Config.InputLayerDimension;
+            AnalyzeLayerDimension = m_Config.AnalyzeLayerDimension;
+            AnalyzeLayerNumber = m_Config.AnalyzeLayerNumber;
+            
+            
             LayerMask = m_Config.LayerMask;
             Parent = m_Config.Parent;
 
@@ -46,101 +51,85 @@ namespace APP.Brain
         }
 
         public override void Init()
-        {            
-            m_Neurons = new List<INeuron>();
+        {
+            m_Neurons = new List<INeuron>(100);
 
+            NeuronController = NeuronControllerDefault.Get();
+            var neuronControllerConfig = new NeuronControllerConfig();
+            NeuronController.Configure(neuronControllerConfig);
+            NeuronController.Init();
 
-            //m_MatrixSize = new Vector3Int(m_MatrixDimension, m_MatrixDimension, m_MatrixDimension);
-            //m_LayerMatrixAnalize = new Neuron[m_MatrixSize.x, m_MatrixSize.y, m_MatrixSize.z];
-
-            // Build input layer
-
-
-            //var inputLayerSize = new Vector3Int(sensorNumber/2, sensorNumber - sensorNumber/2, 0);
-            //m_LayerMatrixInput = new Neuron[inputLayerSize.x, inputLayerSize.y, inputLayerSize.z];
-
-
-            /*
-            for (int z = 0; z < inputLayerSize.z; z++)
-            { 
-                for (int y = 0; y < inputLayerSize.y; y++)
-                { 
-                    for (int x = 0; x < inputLayerSize.x; x++)
-                    { 
-                        var position = new Vector3(x - (inputLayerSize.x/2), y - (inputLayerSize.y/2), z - inputLayerSize.z/2);
-                        var size = Random.Range(0f, 100f);
-                        var energy = Random.Range(0f, 100f);
-                        m_Neurons.Add(m_LayerMatrixInput[x, y, z] = Clone(size, energy, position));
-                    }
-                }
-            }
-            */
-
-            /*
-            // Build analize layer
+            var inputLayer = CreateInputLayer();
+            NeuronController.SetInputLayer(inputLayer);
             
-            for (int z = 0; z < m_MatrixSize.z; z++)
-            { 
-                for (int y = 0; y < m_MatrixSize.y; y++)
-                { 
-                    for (int x = 0; x < m_MatrixSize.x; x++)
-                    { 
-                        var position = new Vector3(x - (m_MatrixSize.x/2), y - (m_MatrixSize.y/2), z - m_MatrixSize.z/2);
-                        var size = Random.Range(0f, 100f);
-                        var energy = Random.Range(0f, 100f);
-                        m_Neurons.Add(m_Matrix[x, y, z] = Clone(size, energy, position));
-                    }
-                }
-            }
-            */
-
+            var analyzeLayer = CreateAnalyzeLayer();
+            NeuronController.SetAnalyzeLayer(analyzeLayer);
+            
             base.Init();
         }
 
         public override void Dispose()
         {
-            foreach (var neuron in m_Neurons)
-                neuron.Dispose();
+            NeuronController.Dispose();
 
             base.Dispose();
         }
 
-
-        public void Recognize(IRecognizable recognizable)
-        {
-            foreach (var sensible in recognizable.GetSensibles())
-            {
-                var position = new Vector3(sensible.Position.x, sensible.Position.y, sensible.Position.z - 5);
-                var neuron = GetNeuron(position);
-
-                m_Neurons.Add(neuron);
-  
-                var sensor = neuron.GetSensor();
-                sensor.Associate(sensible);
-            }
-
-
-        }
-
+        // ACTIVATE //
         public override void Activate()
         {
-            foreach (var neuron in m_Neurons)
-                neuron.Activate(); 
+            NeuronController.Activate();
 
-            base.Activate();  
+            base.Activate();
         }
 
         public override void Deactivate()
         {
-            foreach (var neuron in m_Neurons)
-                neuron.Deactivate(); 
+            NeuronController.Deactivate();
 
-            base.Deactivate();  
+            base.Deactivate();
         }
 
+        // UPDATE //
+        public void Update()
+        {
+            NeuronController.Update();
 
+        }
 
-        protected abstract INeuron GetNeuron(Vector3 position);
+        
+        public abstract void Recognize(IRecognizable recognizable);
+        public abstract void Analyze();
+        public abstract void Response();
+
+        protected abstract INeuron[,,] CreateInputLayer();
+        protected abstract INeuron[,,] CreateAnalyzeLayer();
+
+        protected INeuron[,,] CreateLayer<TNeuron>(int layerDimension, int layerNumber = 1)
+        where TNeuron: INeuron
+            => CreateLayer<TNeuron>(layerDimension, layerDimension, layerNumber);
+
+        protected INeuron[,,] CreateLayer<TNeuron>(int xSize, int ySize, int layerNumber = 1)
+        where TNeuron: INeuron
+        {
+            var matrix = new INeuron[xSize, ySize, layerNumber];
+            for (int l = 0; l < layerNumber; l++)
+            {
+                for (int y = 0; y < ySize; y++)
+                {
+                    for (int x = 0; x < xSize; x++)
+                    {
+                        var position = new Vector3(x - (xSize / 2), y - (ySize / 2), l);
+                        var neuron = GetNeuron<TNeuron>(position);
+
+                        matrix[x, y, l] = neuron;
+                        m_Neurons.Add(neuron);
+                    }
+                }
+            }
+
+            return matrix;
+        }
 
 
         private void OnNeuronDivided(INeuron neuron)
@@ -153,7 +142,21 @@ namespace APP.Brain
 
         }
 
+        private INeuron GetNeuron<TNeuron>(Vector3 position)
+        where TNeuron: INeuron
+        {
+            var neuron = NeuronModel.Get<TNeuron>();
+            
+            var size = 0.5f;
+            var energy = 50;
+            GetComponent<Transform>(out var parent);
 
+            var neuronConfig = new NeuronConfig(neuron, position, size, energy, LayerMask, parent);
+            neuron.Configure(neuronConfig);
+            neuron.Init();
+
+            return neuron;
+        }
 
         // FACTORY // 
         public static BrainDefault Get(params object[] args)
@@ -161,24 +164,28 @@ namespace APP.Brain
 
         // FACTORY //
         public static TBrain Get<TBrain>(params object[] args)
-        where TBrain: IBrain
+        where TBrain : IBrain
         {
             IFactory factoryCustom = null;
-            
-            if(args.Length > 0)
-                try{ factoryCustom = (IFactory)args[PARAMS_Factory]; } catch { Debug.Log("Custom factory not found! The instance will be created by default."); }
 
-            
+            if (args.Length > 0)
+                try { factoryCustom = (IFactory)args[PARAMS_Factory]; } catch { Debug.Log("Custom factory not found! The instance will be created by default."); }
+
+
             var factory = (factoryCustom != null) ? factoryCustom : new BrainFactory();
             var instance = factory.Get<TBrain>(args);
-            
+
             return instance;
         }
     }
 
-    public interface IBrain : IConfigurable, ICacheable, IActivable, IMessager
+
+
+    public interface IBrain : IConfigurable, ICacheable, IActivable, IUpdateble, IMessager
     {
         void Recognize(IRecognizable recognizable);
+        void Analyze();
+        void Response();
     }
 
     public interface IRecognizable
@@ -190,14 +197,20 @@ namespace APP.Brain
 
     public struct BrainConfig : IConfig
     {
-        public BrainConfig(IBrain instance, int layerMask, Transform parent)
+        public BrainConfig(IBrain instance, int inputLayerDimension, int analyzeLayerDimension, int analyzeLayerNumber, int layerMask, Transform parent)
         {
             Instance = instance;
+            InputLayerDimension = inputLayerDimension;
+            AnalyzeLayerDimension = analyzeLayerDimension;
+            AnalyzeLayerNumber = analyzeLayerNumber;
             LayerMask = layerMask;
             Parent = parent;
         }
 
         public IBrain Instance { get; private set; }
+        public int InputLayerDimension { get; }
+        public int AnalyzeLayerDimension { get; }
+        public int AnalyzeLayerNumber { get; }
         public int LayerMask { get; private set; }
         public Transform Parent { get; internal set; }
     }
@@ -207,7 +220,7 @@ namespace APP.Brain
     public partial class BrainFactory : Factory<IBrain>
     {
         private string m_Label = "Brain";
-        
+
         public BrainFactory()
         {
             Set<BrainDefault>(Constructor.Get((args) => GetBrainDefault(args)));
