@@ -98,8 +98,9 @@ namespace APP.Brain
 
 
 
-
+        public abstract void UpdateBond(Color color, params Vector3[] positions);
         protected abstract void Impulse();
+        
 
         protected void SetSize(float value)
             => Size = value;
@@ -157,6 +158,7 @@ namespace APP.Brain
     public interface INerve: IConfigurable, IActivable
     {
         Vector3 Position { get; }
+        void UpdateBond(Color color, params Vector3[] positions);
     }
 
     public class NerveConfig

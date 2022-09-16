@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using URandom = UnityEngine.Random;
 
 namespace APP.Brain
 {
@@ -9,6 +10,7 @@ namespace APP.Brain
     public class DendriteDefault : NerveModel, IDendrite
     {
         private List<ISensor> m_Sensors;
+        private LineRenderer m_LineRenderer;
         
         public static readonly string PREFAB_Label = "Dendrite";
 
@@ -19,9 +21,34 @@ namespace APP.Brain
 
         public override void Configure(params object[] args)
         {
+            if (VerifyOnConfigure())
+                return;
+
+            if (GetComponent<LineRenderer>(out m_LineRenderer) == false)
+                m_LineRenderer = SetComponent<LineRenderer>();
 
 
-            base.Configure(args);
+            if (args.Length > 0)
+            {
+                base.Configure(args);
+                return;
+            }
+            
+            // CONFIGURE BY DEFAULT //
+            var position = Vector3.zero;
+            var size = URandom.Range(0f, 100f);
+            var energy = URandom.Range(0f, 100f);
+            var layerMask = 9;
+            
+            Transform parent = null;
+            if (Seacher.Find<IScene>(out var scenes))
+                if(scenes[0].GetComponent<Transform>(out var neuronParent))
+                    parent = neuronParent != null ? neuronParent : transform.parent;
+
+            var config = new NerveConfig(this, position, size, layerMask, parent);
+
+            base.Configure(config);
+            Send($"The instance was configured by default!");
         }
 
         public override void Init()
@@ -33,7 +60,6 @@ namespace APP.Brain
             var sensorPosition = new Vector3(Position.x - 0.25f, Position.y, Position.z - 0.25f);
             var sensor = Grow<SensorDefault>(sensorPosition, Size, parent);  
             sensor.Excited += OnSensorExcited;        
-            Debug.DrawLine(Position, sensorPosition, Color.yellow);
             m_Sensors.Add(sensor);
         
             base.Init();
@@ -72,7 +98,7 @@ namespace APP.Brain
         public override void Update() 
         {
             foreach (var sensor in m_Sensors)
-                Debug.DrawLine(Position, sensor.Position, Color.yellow);
+                sensor.UpdateBond(Color.yellow, Position, sensor.Position);
             
             base.Update();
         }
@@ -121,6 +147,11 @@ namespace APP.Brain
         }
         */
 
+        public override void UpdateBond(Color color, params Vector3[] points)
+        {
+            for (int i = 0; i < points.Length; i++)
+                m_LineRenderer.SetPosition(i, points[i]);
+        }
 
         private void OnSensorExcited(Сharge charge)
         {

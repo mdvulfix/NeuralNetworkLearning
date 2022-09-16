@@ -289,11 +289,11 @@ namespace APP.Brain
 
         public virtual void Update()
         {
-            Debug.DrawLine(Position, m_Axon.Position, Color.yellow);
+            //Debug.DrawLine(Position, m_Axon.Position, Color.yellow);
             UpdateBond(Color.yellow, Position, m_Axon.Position);
 
             foreach (var dendrite in m_Dendrites)
-                Debug.DrawLine(Position, dendrite.Position, Color.yellow);
+                dendrite.UpdateBond(Color.yellow, dendrite.Position, Position);
 
 
             //EnergyCalculate();
