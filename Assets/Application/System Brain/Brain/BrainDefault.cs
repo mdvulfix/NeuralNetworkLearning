@@ -63,17 +63,19 @@ namespace APP.Brain
         protected override INeuron[,,] CreateInputLayer()
             => CreateLayer<NeuronInput>(InputLayerDimension);
 
-
         protected override INeuron[,,] CreateAnalyzeLayer() 
             => CreateLayer<NeuronAnalyzer>(AnalyzeLayerDimension, AnalyzeLayerNumber);
    
     }
 
     public partial class BrainFactory : Factory<IBrain>
-    {       
+    {
+        public partial void Setup() 
+            => Set<BrainDefault>(Constructor.Get((args) => GetBrainDefault(args)));
+
+
         private BrainDefault GetBrainDefault(params object[] args)
         {
-            
             var prefabPath = $"{BrainModel.PREFAB_Folder}/{BrainDefault.PREFAB_Label}";
             var prefab = Resources.Load<GameObject>(prefabPath);
             

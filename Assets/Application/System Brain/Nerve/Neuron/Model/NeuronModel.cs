@@ -120,9 +120,6 @@ namespace APP.Brain
             base.Init();
         }
 
-        
-
-
         public override void Dispose()
         {
             m_Axon.Dispose();
@@ -158,11 +155,6 @@ namespace APP.Brain
 
             base.Deactivate();
         }
-
-
-
-
-
 
         public ISensor GetSensor()
         {
@@ -377,11 +369,11 @@ namespace APP.Brain
     public partial class NeuronFactory : Factory<INeuron>
     {
         public NeuronFactory()
-        {
+        { 
             Set<NeuronInput>(Constructor.Get((args) => GetNeuronInput(args)));
             Set<NeuronAnalyzer>(Constructor.Get((args) => GetNeuronAnalyzer(args)));
-
         }
+
     }
 
 }

@@ -24,6 +24,11 @@ namespace APP
         private BrainController m_BrainController;
         
         [Header("SYSTEM DRAW")]
+        
+        private Color m_ColorBackground = Color.black;
+        private Color m_ColorHover = Color.grey;
+        private Color m_ColorDraw = Color.green;
+        
         [Header("Picture settings")]
         [SerializeField] private int m_InputFieldDimension = 10;
         private PictureController m_PictureController;
@@ -31,11 +36,11 @@ namespace APP
         private int m_PictureWidht;
         private int m_PictureHeight;
         private int m_PicturLayerMask;
-        
-
+    
 
         [Header("Pencil settings")]
-        private PencilController m_PencilController;        
+        private PencilController m_PencilController; 
+        private IPencil m_Pencil;       
 
         
         [Header("SYSTEM INPUT")]
@@ -85,8 +90,6 @@ namespace APP
             base.Init();
         }
 
-
-
         public override void Dispose()
         {
             m_BrainController.Dispose();
@@ -97,14 +100,11 @@ namespace APP
             base.Dispose();
         }
         
+
         public void Update()
         {
             throw new System.NotImplementedException();
         }
-    
-    
-    
-    
     
     
         private void SetupInput()
@@ -117,15 +117,11 @@ namespace APP
     
         private void SetupPicture()
         {
-            var colorBackground = Color.black;
-            var colorHover = Color.grey;
-            var colorDraw = Color.green;
-
             var pictureWidht = m_InputFieldDimension;
             var pictureHeight = m_InputFieldDimension;
             var picturLayerMask = 8;
             m_Picture = Picture3D.Get();
-            var pictureConfig = new PictureConfig(m_Picture, pictureWidht, pictureHeight, colorBackground, colorHover, picturLayerMask, m_Scene);
+            var pictureConfig = new PictureConfig(m_Picture, pictureWidht, pictureHeight, m_ColorBackground, m_ColorHover, picturLayerMask, m_Scene);
             m_Picture.Configure(pictureConfig);
 
             m_PictureController = PictureController.Get();
@@ -136,12 +132,12 @@ namespace APP
 
         private void SetupPencil()
         {
-            var pencil = PencilModel.Get();
-            //var pencilConfig = new PencilConfig(pencil, colorDraw, colorBackground);
-            //pencil.Configure(pencilConfig);
+            m_Pencil = PencilModel.Get();
+            var pencilConfig = new PencilConfig(m_Pencil, m_ColorDraw, m_ColorBackground);
+            m_Pencil.Configure(pencilConfig);
 
             m_PencilController = PencilController.Get();
-            var pencilControllerConfig = new PencilControllerConfig(pencil);
+            var pencilControllerConfig = new PencilControllerConfig(m_Pencil);
             m_PencilController.Configure(pencilControllerConfig);
             m_PencilController.Init();
         }
@@ -149,19 +145,19 @@ namespace APP
         private void SetupBrain()
         {
             var nerveLayerMask = 9;
-            var brain = BrainModel.Get();
+            m_Brain = BrainModel.Get();
 
             var inputLayerDimension = m_InputFieldDimension;
             var analyzeLayerDimension = m_InputFieldDimension / 2;
             var analyzeLayerNumber = 2;
 
-            var brainConfig = new BrainConfig(brain, inputLayerDimension, analyzeLayerDimension, analyzeLayerNumber, nerveLayerMask, m_Scene);
-            brain.Configure(brainConfig);
+            var brainConfig = new BrainConfig(m_Brain, inputLayerDimension, analyzeLayerDimension, analyzeLayerNumber, nerveLayerMask, m_Scene);
+            m_Brain.Configure(brainConfig);
 
             m_BrainController = BrainController.Get();
-            //var brainControllerConfig = new BrainControllerConfig(brain, picture);
-            //m_BrainController.Configure(brainControllerConfig);
-            //m_BrainController.Init();
+            var brainControllerConfig = new BrainControllerConfig(m_Brain, m_Picture);
+            m_BrainController.Configure(brainControllerConfig);
+            m_BrainController.Init();
         }
     
     

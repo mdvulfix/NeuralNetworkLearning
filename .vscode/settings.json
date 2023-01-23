@@ -53,6 +53,9 @@
         "Temp/":true
     },
 
+    "editor.fontFamily":"Consolas, monospace",
+    
+    
     "editor.tokenColorCustomizations": 
     {
         "[Monolivia]": 

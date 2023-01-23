@@ -100,6 +100,7 @@ namespace APP.Brain
 
     public partial class NeuronFactory : Factory<INeuron>
     {
+
         private NeuronAnalyzer GetNeuronAnalyzer(params object[] args)
         {       
             var prefabPath = $"{NeuronModel.PREFAB_Folder}/{NeuronInput.PREFAB_Label}";

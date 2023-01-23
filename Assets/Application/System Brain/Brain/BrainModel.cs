@@ -223,8 +223,12 @@ namespace APP.Brain
 
         public BrainFactory()
         {
-            Set<BrainDefault>(Constructor.Get((args) => GetBrainDefault(args)));
+
+            Setup();
+            //Set<BrainDefault>(Constructor.Get((args) => GetBrainDefault(args)));
         }
+
+        public partial void Setup();
     }
 
 }
