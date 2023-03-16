@@ -24,7 +24,7 @@ namespace APP.Brain
 
         public INeuronController NeuronController { get; private set; }
 
-        public static readonly string PREFAB_Folder = "Preefab";
+        public static readonly string PREFAB_Folder = "Prefab";
 
         // CONFIGURE //
         public override void Configure(params object[] args)
@@ -44,7 +44,9 @@ namespace APP.Brain
             
             
             LayerMask = m_Config.LayerMask;
-            Parent = m_Config.Parent;
+            
+            if(m_Config.Parent != null)
+                transform.SetParent(m_Config.Parent);
 
             base.Configure(args);
 
@@ -52,6 +54,11 @@ namespace APP.Brain
 
         public override void Init()
         {
+            
+            if(VerifyOnInit())
+                return;
+            
+            
             m_Neurons = new List<INeuron>(100);
 
             NeuronController = NeuronControllerDefault.Get();
