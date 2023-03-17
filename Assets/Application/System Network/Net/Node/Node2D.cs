@@ -1,20 +1,21 @@
 using System;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace APP.Network
 {
     [Serializable]
-    [RequireComponent(typeof(SpriteRenderer))]
+    [RequireComponent(typeof(Image))]
     [RequireComponent(typeof(CircleCollider2D))]
     public class Node2D : NodeModel, INode
     {
         private readonly string FOLDER_SPRITES = "Sprite";
         private string m_SpriteLabel = "Circle";
         
-        private SpriteRenderer m_Renderer;
+        private Image m_Image;
         private CircleCollider2D m_Collider;
 
-        private Color ColorCurrent => m_Renderer.color;
+        private Color ColorCurrent => m_Image.color;
         
         public static readonly string PREFAB_Label = "Node2D";
         
@@ -28,13 +29,13 @@ namespace APP.Network
             if(VerifyOnConfigure())
                 return;
         
-            var backgroundColor = Color.grey;
-            var activeColor = Color.green;
+            var colorBackground = Color.grey;
+            var colorActive = Color.green;
 
             var obj = gameObject;
 
-            if (obj.TryGetComponent<SpriteRenderer>(out m_Renderer) == false)
-                m_Renderer = obj.AddComponent<SpriteRenderer>();
+            if (obj.TryGetComponent<Image>(out m_Image) == false)
+                m_Image = obj.AddComponent<Image>();
 
             if (obj.TryGetComponent<CircleCollider2D>(out m_Collider) == false)
                 m_Collider = obj.AddComponent<CircleCollider2D>();
@@ -42,8 +43,8 @@ namespace APP.Network
             
             
             //var obj = Pixel.gameObject;
-            m_Renderer.sprite = Resources.Load<Sprite>($"{FOLDER_SPRITES}/{m_SpriteLabel}");
-            m_Renderer.color = backgroundColor;
+            m_Image.sprite = Resources.Load<Sprite>($"{FOLDER_SPRITES}/{m_SpriteLabel}");
+            m_Image.color = colorBackground;
             m_Collider.radius = 0.5f;
             
             if (args.Length > 0)
@@ -61,8 +62,9 @@ namespace APP.Network
                 if(scenes[0].GetComponent<Transform>(out var networkParent))
                     parent = networkParent != null ? networkParent : transform.parent;
                 
-            var nodeConfig = new NodeConfig(this, position, backgroundColor, activeColor, layerMask, parent);
+            var nodeConfig = new NodeConfig(this, position, colorBackground, colorActive, layerMask, parent);
             base.Configure(nodeConfig);
+            
             Send($"{ this.GetName() } was configured by default!");
         }
 
@@ -83,13 +85,24 @@ namespace APP.Network
         }
 
        
-        protected override void SetColor(Color color)
+        public override void SetColor(Color color)
         {
-            if (m_Renderer.color == color)
+            if (m_Image.color == color)
                 return;
 
-            m_Renderer.color = color;
+            m_Image.color = color;
         }
+        
+        public override void SetPosition(Vector3 position)
+        {
+            if (Position == position)
+                return;
+
+            Position = position;
+        }
+        
+        
+        
         
         public void Excite()
         {

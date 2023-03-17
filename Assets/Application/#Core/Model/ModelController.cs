@@ -15,7 +15,8 @@ namespace APP
             IFactory factoryCustom = null;
             
             if(args.Length > 0)
-                try{ factoryCustom = (IFactory)args[PARAMS_Factory]; } catch { Debug.Log("Custom factory not found! The instance will be created by default."); }
+                try{ factoryCustom = (IFactory)args[PARAMS_Factory]; } 
+                catch { Debug.Log("Custom factory not found! The instance will be created by default."); }
 
             
             var factory = (factoryCustom != null) ? factoryCustom : new FactoryDefault();

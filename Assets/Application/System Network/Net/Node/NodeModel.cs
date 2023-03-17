@@ -12,10 +12,10 @@ namespace APP.Network
         
         public INode Instance {get; private set;}
         
-        public Vector3 Position { get => transform.position; private set => transform.position = value; }
+        public Vector3 Position { get => transform.position; protected set => transform.position = value; }
 
-        public Color ColorDefault {get; private set; } = Color.grey;
-        public Color ColorActive {get; private set; } = Color.green;
+        public Color ColorDefault {get; protected set; } = Color.grey;
+        public Color ColorActive {get; protected set; } = Color.green;
 
                 
         public static readonly string PREFAB_Folder = "Prefab";
@@ -50,7 +50,8 @@ namespace APP.Network
     
         public abstract void OnActivated(bool activated);
         
-        protected abstract void SetColor(Color color);
+        public abstract void SetColor(Color color);
+        public abstract void SetPosition(Vector3 position);
 
 
 
@@ -82,7 +83,16 @@ namespace APP.Network
     
     public interface INode: IConfigurable, ICacheable, IActivable, IMessager
     {
-        
+        Vector3 Position { get; }
+
+        Color ColorDefault {get; }
+        Color ColorActive {get; }
+    
+    
+        void SetColor(Color color);
+        void SetPosition(Vector3 position);
+    
+    
     }
 
 

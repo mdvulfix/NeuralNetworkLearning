@@ -32,17 +32,28 @@ namespace APP.Network
 
         public override void Init()
         {
-            m_Net.Init();
-            m_Net.Activate();
+            
             base.Init();
         }
 
         public override void Dispose()
         {
-            m_Net.Dispose();
+
             base.Dispose();
         }
 
+        public void Activate()
+        {
+            m_Net.Activate();
+
+        }
+
+        public void Deactivate()
+        {
+            m_Net.Deactivate();
+        }
+
+        
         //public void PixelColorize(Color color) =>
         //    PixelColorize(color, Picture.PixelActive);
         
@@ -65,7 +76,7 @@ namespace APP.Network
 
     }
 
-    public interface INetController : IController
+    public interface INetController : IController, IActivable
     {
         INode NodeActivated { get; }
 

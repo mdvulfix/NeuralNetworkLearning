@@ -216,17 +216,19 @@ namespace APP
         { 
             Record(); 
             Init(); 
+            Activate();
         } 
         
         private void Start() 
         {
-            Activate();
+            
         }
         
         private void OnDisable() 
         { 
-            Dispose();
+            Deactivate();
             Clear(); 
+            Dispose();
         } 
 
         

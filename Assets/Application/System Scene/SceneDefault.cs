@@ -1,10 +1,15 @@
+using System;
 using UnityEngine;
 
 
 namespace APP
 {
+    [Serializable]
     public class SceneDefault : ModelCacheable, IScene
     {
+
+        
+        
         public Transform Scene  => gameObject.transform;
 
         public bool IsLoaded {get; private set;}
