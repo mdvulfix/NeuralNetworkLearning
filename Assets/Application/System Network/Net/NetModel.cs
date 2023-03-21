@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace APP.Network
 {
-    public abstract class NetModel : ModelCacheable
+    public abstract class NetModel : ModelLoadable
     {
         private NetConfig m_Config;
 
@@ -131,7 +131,7 @@ namespace APP.Network
                 for (int i = 0; i < dimension; i++)
                 {
                     var node = CreateNode<TNode>(Vector3.zero);
-
+                    node.SetWeight(UnityEngine.Random.Range(0.0f, 1.0f));
                     matrix[i, j] = node;
                 }
             }

@@ -1,21 +1,29 @@
 using System;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace APP.Network
 {
     [Serializable]
     public abstract class NodeModel: ModelCacheable
     {        
+
+        [SerializeField] private float m_Weight;
+        
         private NodeConfig m_Config;
 
         private int m_LayerMask;
         
+        
         public INode Instance {get; private set;}
         
+        public Transform Parent { get => transform.parent; private set { if (value != null) transform.SetParent(value); } }
         public Vector3 Position { get => transform.position; protected set => transform.position = value; }
 
         public Color ColorDefault {get; protected set; } = Color.grey;
         public Color ColorActive {get; protected set; } = Color.green;
+
+        public float Weight {get => m_Weight; protected set => m_Weight = value;  }
 
                 
         public static readonly string PREFAB_Folder = "Prefab";
@@ -27,6 +35,7 @@ namespace APP.Network
         {
             if(VerifyOnConfigure())
                 return;
+
 
             m_Config = args.Length > 0 ?
             (NodeConfig)args[PARAMS_Config] :
@@ -43,6 +52,7 @@ namespace APP.Network
                         
             ColorDefault = m_Config.ColorDefault;
             ColorActive = m_Config.ColorActive;
+            Parent = m_Config.Parent;
 
             base.Configure(args);
         }
@@ -52,11 +62,7 @@ namespace APP.Network
         
         public abstract void SetColor(Color color);
         public abstract void SetPosition(Vector3 position);
-
-
-
-
-
+        public abstract void SetWeight(float weight);
 
 
         // FACTORY //
@@ -91,6 +97,7 @@ namespace APP.Network
     
         void SetColor(Color color);
         void SetPosition(Vector3 position);
+        void SetWeight(float weight);
     
     
     }

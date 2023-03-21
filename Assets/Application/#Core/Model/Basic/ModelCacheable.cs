@@ -124,8 +124,8 @@ namespace APP
         }
 
         // CALLBACK //
-        public void OnMessage(IMessage message) =>
-            Send($"{message.Sender}: {message.Text}", message.LogFormat);
+        public void OnMessage(IMessage message) 
+            => Send($"{message.Sender}: {message.Text}", message.LogFormat);
 
 
         protected virtual void OnConfigureComplete(bool isDebag)

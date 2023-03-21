@@ -12,6 +12,8 @@ namespace APP.Network
         private readonly string FOLDER_SPRITES = "Sprite";
         private string m_SpriteLabel = "Circle";
         
+        [SerializeField] private Text m_WeightField;
+
         private Image m_Image;
         private CircleCollider2D m_Collider;
 
@@ -40,7 +42,9 @@ namespace APP.Network
             if (obj.TryGetComponent<CircleCollider2D>(out m_Collider) == false)
                 m_Collider = obj.AddComponent<CircleCollider2D>();
             
-            
+
+            m_WeightField = obj.GetComponentInChildren<Text>();
+            m_WeightField.text = Weight.ToString();
             
             //var obj = Pixel.gameObject;
             m_Image.sprite = Resources.Load<Sprite>($"{FOLDER_SPRITES}/{m_SpriteLabel}");
@@ -101,7 +105,14 @@ namespace APP.Network
             Position = position;
         }
         
-        
+        public override void SetWeight(float weight)
+        {
+            if (Weight == weight)
+                return;
+
+            Weight = weight;
+            m_WeightField.text = String.Format("{0:0.00}", Weight);
+        }
         
         
         public void Excite()
@@ -130,6 +141,9 @@ namespace APP.Network
             new GameObject("Node");
 
             obj.SetActive(false);
+            var objRect = obj.GetComponent<RectTransform>();
+
+
 
             var instance = obj.AddComponent<Node2D>();
             
