@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace APP.Network
+namespace APP.Net
 {
     [Serializable]
     public abstract class NodeModel: ModelCacheable
@@ -12,13 +12,19 @@ namespace APP.Network
         
         private NodeConfig m_Config;
 
+        
+        private INode m_Instance;
+        private RectTransform m_InstanceRectTransform;
+
         private int m_LayerMask;
         
         
-        public INode Instance {get; private set;}
-        
+        public INode Instance {get => m_Instance; private set => m_Instance = value ;}
         public Transform Parent { get => transform.parent; private set { if (value != null) transform.SetParent(value); } }
-        public Vector3 Position { get => transform.position; protected set => transform.position = value; }
+        
+        
+        public Vector3 Position { get => m_InstanceRectTransform.position; protected set => m_InstanceRectTransform.position = value; }
+        public Vector3 Size { get => m_InstanceRectTransform.sizeDelta; protected set => m_InstanceRectTransform.sizeDelta = value; }
 
         public Color ColorDefault {get; protected set; } = Color.grey;
         public Color ColorActive {get; protected set; } = Color.green;
@@ -41,7 +47,8 @@ namespace APP.Network
             (NodeConfig)args[PARAMS_Config] :
             default(NodeConfig);
         
-            Instance = m_Config.Instance;
+            m_Instance = m_Config.Instance;
+            m_InstanceRectTransform = GetComponent<RectTransform>();
             Position = m_Config.Position;
             
             transform.name = $"Node ({Position.x.ToString()}; {Position.y.ToString()})";

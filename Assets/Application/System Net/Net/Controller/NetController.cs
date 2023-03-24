@@ -3,7 +3,7 @@ using System.Collections;
 using UnityEngine;
 
 
-namespace APP.Network
+namespace APP.Net
 {
     [Serializable]
     public class NetController: ModelController, INetController

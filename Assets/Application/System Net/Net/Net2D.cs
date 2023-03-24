@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace APP.Network
+namespace APP.Net
 {
     
     [RequireComponent(typeof(Canvas))]

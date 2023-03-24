@@ -4,7 +4,7 @@ using UnityEngine;
 
 using APP.Input;
 
-namespace APP.Network
+namespace APP.Net
 {
     public class SessionNetwork : ModelLoadable, IUpdateble
     {

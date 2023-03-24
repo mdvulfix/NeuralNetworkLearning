@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace APP.Network
+namespace APP.Net
 {
     public abstract class NetModel : ModelLoadable
     {

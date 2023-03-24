@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace APP.Network
+namespace APP.Net
 {
     public class NodeControllerDefault : ModelController, INodeController
     {

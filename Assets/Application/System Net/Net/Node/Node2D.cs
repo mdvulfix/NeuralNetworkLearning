@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace APP.Network
+namespace APP.Net
 {
     [Serializable]
     [RequireComponent(typeof(Image))]
@@ -18,6 +18,9 @@ namespace APP.Network
         private CircleCollider2D m_Collider;
 
         private Color ColorCurrent => m_Image.color;
+
+        private float m_Padding = 1.2f;
+        private float m_Spacing = 1.2f;
         
         public static readonly string PREFAB_Label = "Node2D";
         
@@ -99,10 +102,13 @@ namespace APP.Network
         
         public override void SetPosition(Vector3 position)
         {
-            if (Position == position)
-                return;
+            var canvasObj = transform.parent.gameObject;
+            var canvasRectTransform = canvasObj.GetComponent<RectTransform>();
+            var canvasSize = new Vector3(canvasRectTransform.rect.width, canvasRectTransform.rect.height, 0);
 
-            Position = position;
+            Position= new Vector3(m_Padding * Size.x + position.x * Size.x * m_Spacing,
+                                  m_Padding * Size.y + position.y * Size.y * m_Spacing,
+                                  0);
         }
         
         public override void SetWeight(float weight)
