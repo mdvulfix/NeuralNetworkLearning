@@ -1,9 +1,8 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-namespace APP
+namespace APP.Pool
 {
     public class Pool<TPoolable> : PoolDefault, IPool<TPoolable>, IConfigurable, IUpdateble
     where TPoolable : IPoolable
@@ -129,66 +128,6 @@ namespace APP
             => Get<PoolDefault>(args);
     }
 
-    public abstract class PoolModel : AConfigurable
-    {
-
-        private Stack<IPoolable> m_Poolables = new Stack<IPoolable>(100);
-
-        public int Count => m_Poolables.Count;
-
-        public bool Push(IPoolable poolable)
-        {
-            m_Poolables.Push(poolable);
-            return true;
-        }
-
-        public bool Pop(out IPoolable poolable)
-        {
-            poolable = null;
-
-            if (m_Poolables.Count > 0)
-            {
-                poolable = m_Poolables.Pop();
-                return true;
-            }
-
-            return false;
-        }
-
-        public bool Peek(out IPoolable poolable)
-        {
-            poolable = null;
-
-            if (m_Poolables.Count > 0)
-            {
-                poolable = m_Poolables.Peek();
-                return true;
-            }
-
-            return false;
-        }
-
-
-
-
-
-        public IEnumerator GetEnumerator()
-        => m_Poolables.GetEnumerator();
-
-
-
-        // FACTORY //
-        public static TPool Get<TPool>(params object[] args)
-        where TPool : IPool, new()
-        {
-            var pool = new TPool();
-            pool.Configure(args);
-            pool.Init();
-
-            return pool;
-        }
-    }
-
 
     public interface IPool<TPoolable> : IPool
     {
@@ -198,67 +137,59 @@ namespace APP
 
     }
 
-    public interface IPool : IEnumerable, IConfigurable, IUpdateble
+
+    public partial class PoolFactory : Factory<IPool>, IFactory
     {
-        int Count { get; }
-
-        bool Push(IPoolable poolable);
-        bool Pop(out IPoolable poolable);
-        bool Peek(out IPoolable poolable);
-
-    }
-
-
-    public interface IPoolable : IConfigurable
-    {
-
-    }
-
-    public delegate IPoolable GetPoolableDelegate();
-
-    public struct PoolConfig : IConfig
-    {
-        public PoolConfig(int limit, GetPoolableDelegate getPoolable)
+        private PoolDefault GetPoolDefault(params object[] args)
         {
-            Limit = limit;
 
-            GetPoolable = getPoolable;
+            var instance = new PoolDefault();
+
+            if (args.Length > 0)
+            {
+                var config = (PoolConfig)args[PoolModel.PARAMS_Config];
+                instance.Configure(config);
+            }
+
+            return instance;
         }
 
-        public int Limit { get; private set; }
-        public GetPoolableDelegate GetPoolable { get; private set; }
+        private Pool<TPoolable> GetPool<TPoolable>(params object[] args)
+        where TPoolable : IPoolable
+        {
+            var instance = new Pool<TPoolable>();
+            if (args.Length > 0)
+            {
+                var config = (PoolConfig)args[PoolModel.PARAMS_Config];
+                instance.Configure(config);
+            }
+
+            return instance;
+        }
+
+
+
     }
+
 
     public partial class PoolFactory<TPoolable> : Factory<IPool>, IFactory
     where TPoolable : IPoolable
     {
 
-        public PoolFactory()
-        {
-            Set<TPoolable>(Constructor.Get((args) => GetPool(args)));
-
-        }
-
-
-
-
-
-    }
-
-    public partial class PoolFactory<TPoolable> : Factory<IPool>, IFactory
-    where TPoolable : IPoolable
-    {
         private Pool<TPoolable> GetPool(params object[] args)
         {
             var instance = new Pool<TPoolable>();
-            instance.Configure(args);
-            instance.Init();
+            if (args.Length > 0)
+            {
+                var config = (PoolConfig)args[PoolModel.PARAMS_Config];
+                instance.Configure(config);
+            }
 
             return instance;
-
         }
+
+
+
     }
-
-
 
 }

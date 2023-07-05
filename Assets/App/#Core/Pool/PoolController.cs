@@ -121,20 +121,41 @@ namespace APP.Pool
 
         public bool Push<TPoolable>(TPoolable poolable)
         where TPoolable : IPoolable
-            => Push(poolable);
+        {
+            return m_Pool.Push(poolable);
+        }
 
         public bool Pop<TPoolable>(out TPoolable poolable)
         where TPoolable : IPoolable
-            => Pop(out poolable);
+        {
+            poolable = default(TPoolable);
+
+            if (m_Pool.Pop(out var instance))
+            {
+                poolable = (TPoolable)instance;
+                return true;
+            }
+
+            return false;
+        }
 
         public bool Peek<TPoolable>(out TPoolable poolable)
         where TPoolable : IPoolable
-            => Peek(out poolable);
+        {
+            poolable = default(TPoolable);
+
+            if (m_Pool.Peek(out var instance))
+            {
+                poolable = (TPoolable)instance;
+                return true;
+            }
+
+            return false;
+        }
 
 
         public bool Push(IPoolable poolable)
         {
-            poolable.Dispose();
             return m_Pool.Push(poolable);
         }
 
@@ -145,7 +166,6 @@ namespace APP.Pool
             if (m_Pool.Pop(out var instance))
             {
                 poolable = (IPoolable)instance;
-                poolable.Init();
                 return true;
             }
 
@@ -159,7 +179,6 @@ namespace APP.Pool
             if (m_Pool.Peek(out var instance))
             {
                 poolable = (IPoolable)instance;
-                poolable.Init();
                 return true;
             }
 
@@ -170,11 +189,20 @@ namespace APP.Pool
 
         public static PoolController Get(params object[] args)
         {
-            var poolController = new PoolController();
-            poolController.Configure(args);
-            poolController.Init();
+            if (args.Length > 0)
+            {
+                try
+                {
+                    var config = (PoolControllerConfig)args[PARAMS_Config];
+                    var instance = new PoolController();
+                    instance.Configure(config);
+                    return instance;
+                }
 
-            return poolController;
+                catch { Debug.Log("Custom factory not found! The instance will be created by default."); }
+            }
+
+            return new PoolController();
         }
     }
 

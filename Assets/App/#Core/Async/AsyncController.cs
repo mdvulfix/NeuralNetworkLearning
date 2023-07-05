@@ -51,11 +51,9 @@ namespace APP
 
 
             var poolableFactory = new AwaiterFactory();
-            var getPoolable = poolableFactory.Get<AwaiterDefault>(awaiterConfig);
+            var poolControllerConfig = new PoolControllerConfig(() => poolableFactory.Get<AwaiterDefault>());
 
-            var poolControllerConfig = new PoolControllerConfig(() => getPoolable);
-
-            m_PoolController = PoolController<AwaiterDefault>.Get();
+            m_PoolController = PoolController.Get();
             m_PoolController.Configure(poolControllerConfig);
             m_PoolController.Init();
 
@@ -85,7 +83,7 @@ namespace APP
         {
             if (GetAwaiter(out var awaiter))
             {
-                if (awaiter.IsReady == true)
+                if (awaiter != null && awaiter.IsReady == true)
                 {
                     awaiter.Run(func);
                     FuncAsyncExecuted?.Invoke(new FuncAsyncInfo(awaiter, func));
@@ -143,6 +141,7 @@ namespace APP
                     awaiter.FuncCompleted += OnAwaiterFuncComplete;
 
                     awaiter.Init();
+                    awaiter.Activate();
                     return true;
                 }
             }
@@ -157,12 +156,13 @@ namespace APP
 
         private void PushAwaiter(IAwaiter awaiter)
         {
+            awaiter.Deactivate();
+            awaiter.Dispose();
 
             awaiter.Initialized -= OnAwaiterInitialized;
             awaiter.Disposed -= OnAwaiterDisposed;
             awaiter.FuncStarted -= OnAwaiterBusy;
             awaiter.FuncCompleted -= OnAwaiterFuncComplete;
-            awaiter.Dispose();
 
             m_PoolController.Push(awaiter);
 
@@ -235,14 +235,13 @@ namespace APP
                     var config = (AsyncControllerConfig)args[PARAMS_Config];
                     var instance = new AsyncController();
                     instance.Configure(config);
-                    instance.Init();
                     return instance;
                 }
 
                 catch { Debug.Log("Custom factory not found! The instance will be created by default."); }
             }
 
-            return new AsyncController(); ;
+            return new AsyncController();
         }
 
     }

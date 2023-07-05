@@ -17,8 +17,7 @@ namespace APP
         [SerializeField] private string m_Label;
 
         private Func<IEnumerator> Func;
-        internal static object PREFAB_Folder;
-        internal static object PREFAB_Label;
+
 
         public bool IsReady => m_IsReady;
 
@@ -28,7 +27,8 @@ namespace APP
         public event Action<IAwaiter> FuncCompleted;
         public event Action<IAwaiter, bool> StateChanged;
 
-
+        public static string PREFAB_Folder;
+        public static string PREFAB_Label;
 
         public override void Configure(params object[] args)
         {
@@ -45,7 +45,6 @@ namespace APP
 
             base.Configure();
         }
-
 
         public override void Init()
         {
@@ -107,8 +106,19 @@ namespace APP
 
 
 
+        protected override void OnActivatedComplete(bool isDebag)
+        {
 
+            m_IsReady = true;
+            base.OnActivatedComplete(m_IsDebug);
+        }
 
+        protected override void OnDeactivatedComplete(bool isDebag)
+        {
+
+            m_IsReady = false;
+            base.OnDeactivatedComplete(m_IsDebug);
+        }
 
         protected override void OnInitComplete(bool isDebag)
         {
