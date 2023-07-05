@@ -4,21 +4,26 @@ using UnityEngine;
 
 namespace APP
 {
-    public class AwaiterModel: ModelCacheable
+    public class AwaiterModel : ModelCacheable
     {
         private static Transform ROOT;
         private static Transform ROOT_POOL;
 
         private IAwaiter m_Instance;
 
+
+        [SerializeField] private bool m_IsDebug = true;
         [SerializeField] private bool m_IsReady;
         [SerializeField] private string m_Label;
 
         private Func<IEnumerator> Func;
-
+        internal static object PREFAB_Folder;
+        internal static object PREFAB_Label;
 
         public bool IsReady => m_IsReady;
 
+        public event Action<IAwaiter> Initialized;
+        public event Action<IAwaiter> Disposed;
         public event Action<IAwaiter> FuncStarted;
         public event Action<IAwaiter> FuncCompleted;
         public event Action<IAwaiter, bool> StateChanged;
@@ -28,7 +33,7 @@ namespace APP
         public override void Configure(params object[] args)
         {
             var config = (AwaiterConfig)args[PARAMS_Config];
-            
+
             m_Instance = config.Instance;
             transform.name = config.Label;
 
@@ -48,6 +53,8 @@ namespace APP
 
             base.Init();
         }
+
+
 
         public void Run(Func<Action<bool>, IEnumerator> func)
         {
@@ -98,68 +105,46 @@ namespace APP
             StateChanged?.Invoke(m_Instance, isReady);
         }
 
+
+
+
+
+
+        protected override void OnInitComplete(bool isDebag)
+        {
+
+            Initialized?.Invoke(m_Instance);
+
+            base.OnInitComplete(m_IsDebug);
+        }
+
+        protected override void OnDisposeComplete(bool isDebag)
+        {
+
+            Disposed?.Invoke(m_Instance);
+
+            base.OnDisposeComplete(m_IsDebug);
+        }
+
+
+
         // FACTORY //
         public static TAwaiter Get<TAwaiter>(params object[] args)
-        where TAwaiter: Component, IAwaiter
+        where TAwaiter : IAwaiter
         {
-            var obj = new GameObject("Awaiter");
-            obj.SetActive(false);
-            obj.transform.SetParent(ROOT_POOL);
+            IFactory factoryCustom = null;
 
-            var awaiter = obj.AddComponent<TAwaiter>();
-            awaiter.Configure(args);
-            awaiter.Init();
-
-            return awaiter;
-        }        
-    }
-
-
-
-    public class AwaiterDefault : AwaiterModel, IAwaiter
-    {
-        public AwaiterDefault() { }
-        public AwaiterDefault(params object[] args)
-            => Configure(args);
-
-        public override void Configure(params object[] args)
-        {
-            if(IsConfigured == true)
-                return;
-                    
             if (args.Length > 0)
-            {
-                base.Configure(args);
-                return;
-            }
+                try { factoryCustom = (IFactory)args[PARAMS_Factory]; }
+                catch { Debug.Log("Custom factory not found! The instance will be created by default."); }
 
-            var label = $"Awaiter {this.GetHashCode()}";
 
-            var pixelConfig = new AwaiterConfig(this, label);
-            base.Configure(pixelConfig);
-            Send($"{ this.GetName() } was configured by default!");
+            var factory = (factoryCustom != null) ? factoryCustom : new AwaiterFactory();
+            var instance = factory.Get<TAwaiter>(args);
+
+            return instance;
         }
 
-
-
-        public override void Init()
-        {
-            if(IsInitialized == true)
-                return;
-            
-            
-            base.Init();
-        }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     }
 
     public struct AwaiterConfig : IConfig
@@ -175,10 +160,12 @@ namespace APP
 
     }
 
-    public interface IAwaiter: IPoolable, IActivable
+    public interface IAwaiter : IPoolable, IActivable
     {
         bool IsReady { get; }
 
+        event Action<IAwaiter> Initialized;
+        event Action<IAwaiter> Disposed;
         event Action<IAwaiter> FuncStarted;
         event Action<IAwaiter> FuncCompleted;
         event Action<IAwaiter, bool> StateChanged;
@@ -187,45 +174,20 @@ namespace APP
         void Stop();
     }
 
-    
-    /*
-    public class FactoryAwaiter : IFactory<IAwaiter>
+
+
+
+
+    public partial class AwaiterFactory : Factory<IAwaiter>, IFactory
     {
-        //public FactoryPool() { }
-   
-        public IAwaiter Get(params object[] args)
+        public AwaiterFactory()
         {
-            var instance =  new Awaiter();
-            instance.Configure(args);
-            instance.Init();
+            Set<AwaiterDefault>(Constructor.Get((args) => GetAwaiterDefault(args)));
 
-            return instance;
         }
-    
+
     }
-    */
 
-}
 
-namespace APP
-{
-
-    public partial class SceneRoot
-    {
-        public static Transform AWAITER;
-        public static Transform AWAITER_POOL;
-
-        public SceneRoot()
-        {
-            if (AWAITER == null)
-                AWAITER = new GameObject("Awaiters").transform;
-
-            if (AWAITER_POOL == null)
-            {
-                AWAITER_POOL = new GameObject("Pool").transform;
-                AWAITER_POOL.transform.SetParent(AWAITER);
-            }
-        }
-    }
 }
 

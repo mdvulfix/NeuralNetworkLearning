@@ -19,7 +19,7 @@ namespace APP
 
 
         public event Action<IMessage> Message;
-        
+
         public static readonly int PARAMS_Config = 0;
         public static readonly int PARAMS_Factory = 1;
 
@@ -28,7 +28,7 @@ namespace APP
         public virtual void Init() => OnInitComplete(isDebag: m_IsDebugOnConfigure);
         public virtual void Dispose() => OnDisposeComplete(isDebag: m_IsDebugOnConfigure);
 
-        
+
         // VERIFY //        
         protected virtual bool VerifyOnConfigure()
         {
@@ -58,7 +58,7 @@ namespace APP
 
             return false;
         }
-        
+
 
         // MESSAGE //
         public IMessage Send(string text, bool isDebag, LogFormat format = LogFormat.None)
@@ -66,7 +66,7 @@ namespace APP
 
         public IMessage Send(string text, LogFormat format = LogFormat.None)
             => Send(new Message(this, text, format));
-             
+
         public IMessage Send(IMessage message, bool isDebag)
         {
             Message?.Invoke(message);
@@ -82,30 +82,30 @@ namespace APP
 
         protected virtual void OnConfigureComplete(bool isDebag)
         {
-            m_IsConfigured = true; 
+            m_IsConfigured = true;
             Send("Configure complete.", isDebag);
         }
-        
+
         protected virtual void OnInitComplete(bool isDebag)
         {
-            m_IsInitialized = true; 
+            m_IsInitialized = true;
             Send("Initialize complete.", isDebag);
         }
-        
+
         protected virtual void OnDisposeComplete(bool isDebag)
         {
             m_IsInitialized = false;
-            Send("Dispose complete.", isDebag); 
+            Send("Dispose complete.", isDebag);
         }
-        
-        
+
+
         public void OnMessage(IMessage message) =>
             Send($"{message.Sender}: {message.Text}", message.LogFormat);
-    
-    
-    
-    
-    
+
+
+
+
+
     }
 
     public interface IConfig
@@ -120,7 +120,7 @@ namespace APP
 
         //event Action<IConfigurable> Configured;
         //event Action<IConfigurable> Initialized;
-        
+
         void Configure(params object[] args);
         void Init();
     }

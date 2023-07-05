@@ -9,10 +9,7 @@ namespace APP
         public static readonly int PARAMS_Config = 0;
         public static readonly int PARAMS_Factory = 1;
 
-        [SerializeField] private bool m_IsDebug = true;
-        [SerializeField] private bool m_IsDebugOnRecord = true;
-        [SerializeField] private bool m_IsDebugOnConfigure = true;
-        [SerializeField] private bool m_IsDebugOnActivate = true;
+
 
 
         [SerializeField] private bool m_IsConfigured;
@@ -21,6 +18,7 @@ namespace APP
 
         private static ICache m_Cache;
 
+
         public bool IsConfigured => m_IsConfigured;
         public bool IsInitialized => m_IsInitialized;
         public bool IsActivated => m_IsActivated;
@@ -28,13 +26,13 @@ namespace APP
         public event Action<IMessage> Message;
 
         // CACHE //
-        public virtual void Record() => OnRecordComplete(isDebag: m_IsDebugOnRecord);
-        public virtual void Clear() => OnClearComplete(isDebag: m_IsDebugOnRecord);
+        public virtual void Record() => OnRecordComplete();
+        public virtual void Clear() => OnClearComplete();
 
         // CONFIGURE //
-        public virtual void Configure(params object[] args) => OnConfigureComplete(isDebag: m_IsDebugOnConfigure);
-        public virtual void Init() => OnInitComplete(isDebag: m_IsDebugOnConfigure);
-        public virtual void Dispose() => OnDisposeComplete(isDebag: m_IsDebugOnConfigure);
+        public virtual void Configure(params object[] args) => OnConfigureComplete();
+        public virtual void Init() => OnInitComplete();
+        public virtual void Dispose() => OnDisposeComplete();
 
 
         // ACTIVATE //
@@ -45,7 +43,7 @@ namespace APP
 
             var obj = gameObject;
 
-            try { obj.SetActive(true); OnActivatedComplete(isDebag: m_IsDebugOnActivate); }
+            try { obj.SetActive(true); OnActivatedComplete(); }
             catch (Exception exception) { Send($"Activation failed. Exeption {exception.Message}", LogFormat.Warning); }
 
         }
@@ -54,7 +52,7 @@ namespace APP
         {
             var obj = gameObject;
 
-            try { obj.SetActive(false); OnActivatedComplete(isDebag: m_IsDebugOnActivate); }
+            try { obj.SetActive(false); OnActivatedComplete(); }
             catch (Exception exception) { Send($"Activation failed. Exeption {exception.Message}", LogFormat.Warning); }
 
         }
@@ -120,51 +118,51 @@ namespace APP
         public IMessage Send(IMessage message)
         {
             Message?.Invoke(message);
-            return Messager.Send(m_IsDebug, this, message.Text, message.LogFormat);
+            return Messager.Send(true, this, message.Text, message.LogFormat);
         }
 
         // CALLBACK //
-        public void OnMessage(IMessage message) 
+        public void OnMessage(IMessage message)
             => Send($"{message.Sender}: {message.Text}", message.LogFormat);
 
 
-        protected virtual void OnConfigureComplete(bool isDebag)
+        protected virtual void OnConfigureComplete(bool isDebag = true)
         {
             m_IsConfigured = true;
             Send("Configure complete.", isDebag);
         }
 
-        protected virtual void OnInitComplete(bool isDebag)
+        protected virtual void OnInitComplete(bool isDebag = true)
         {
             m_IsInitialized = true;
             Send("Initialize complete.", isDebag);
         }
 
-        protected virtual void OnDisposeComplete(bool isDebag)
+        protected virtual void OnDisposeComplete(bool isDebag = true)
         {
             m_IsInitialized = false;
             Send("Dispose complete.", isDebag);
         }
 
-        protected virtual void OnActivatedComplete(bool isDebag)
+        protected virtual void OnActivatedComplete(bool isDebag = true)
         {
             m_IsActivated = true;
             Send("Activated complete.", isDebag);
         }
 
-        protected virtual void OnDeactivatedComplete(bool isDebag)
+        protected virtual void OnDeactivatedComplete(bool isDebag = true)
         {
             m_IsActivated = false;
             Send("Deactivated complete.", isDebag);
         }
 
-        protected virtual void OnRecordComplete(bool isDebag)
+        protected virtual void OnRecordComplete(bool isDebag = true)
         {
             m_IsActivated = true;
             Send("The instance is written to the cache.", isDebag);
         }
 
-        protected virtual void OnClearComplete(bool isDebag)
+        protected virtual void OnClearComplete(bool isDebag = true)
         {
             m_IsActivated = false;
             Send("The instance was cleared from the cache.", isDebag);
@@ -172,15 +170,15 @@ namespace APP
 
         // COMPONENT //
         public TComponent SetComponent<TComponent>()
-        where TComponent: UComponent
+        where TComponent : UComponent
             => gameObject.AddComponent<TComponent>();
 
         public bool GetComponent<TComponent>(out TComponent component)
-        where TComponent: UComponent
+        where TComponent : UComponent
             => gameObject.TryGetComponent<TComponent>(out component);
 
 
-        
+
         // UNITY //
         private void OnEnable() { Record(); }
         private void OnDisable() { Clear(); }

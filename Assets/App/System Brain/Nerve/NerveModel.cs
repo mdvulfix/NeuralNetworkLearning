@@ -5,19 +5,19 @@ using UnityEngine;
 namespace APP.Brain
 {
     [Serializable]
-    public abstract class NerveModel: ModelCacheable
+    public abstract class NerveModel : ModelCacheable
     {
         private NerveConfig m_Config;
-        
+
         [SerializeField] private float m_Size;
 
         private List<Сharge> m_СhargeReceived;
-        
+
         private float m_MoveSpeedDefault = 0.05f;
         [SerializeField] private float m_MoveSpeed = 0.05f;
         [Range(0, 2)] private float m_MoveSpeedChangeRate = 1;
         private float m_MoveDistanceLimit = 2;
-        
+
         [SerializeField] private Vector3 m_Direction;
         [SerializeField] private Vector3 m_DirectionPrevious;
         [SerializeField] private float m_DirectionCooldawnDefault = 5;
@@ -31,21 +31,21 @@ namespace APP.Brain
         public INerve Nerve { get; private set; }
         public Vector3 Position { get => transform.position; private set => transform.position = value; }
         public float Size { get => m_Size; private set => m_Size = value; }
-        public int LayerMask {get => gameObject.layer; private set => gameObject.layer = value; }
-        
-        public Transform Parent { get => transform.parent; private set { if(value != null) transform.SetParent(value); } }
+        public int LayerMask { get => gameObject.layer; private set => gameObject.layer = value; }
+
+        public Transform Parent { get => transform.parent; private set { if (value != null) transform.SetParent(value); } }
 
         public static readonly string PREFAB_Folder = "Prefab";
 
         public override void Configure(params object[] args)
         {
-            if(VerifyOnConfigure())
+            if (VerifyOnConfigure())
                 return;
 
             m_Config = args.Length > 0 ?
             (NerveConfig)args[PARAMS_Config] :
             default(NerveConfig);
-        
+
             Nerve = m_Config.Instance;
             Size = m_Config.Size;
             Position = m_Config.Position;
@@ -57,7 +57,7 @@ namespace APP.Brain
 
         public override void Init()
         {
-            if(VerifyOnInit())
+            if (VerifyOnInit())
                 return;
 
             base.Init();
@@ -65,17 +65,17 @@ namespace APP.Brain
 
         public override void Dispose()
         {
-            
-            
+
+
             base.Dispose();
         }
 
 
         public virtual void CargeCalculate()
-        { 
+        {
             foreach (var charge in m_СhargeReceived)
             {
-                
+
             }
         }
 
@@ -100,7 +100,7 @@ namespace APP.Brain
 
         public abstract void UpdateBond(Color color, params Vector3[] positions);
         protected abstract void Impulse();
-        
+
 
         protected void SetSize(float value)
             => Size = value;
@@ -125,37 +125,38 @@ namespace APP.Brain
 
 
         protected TNerve Grow<TNerve>(Vector3 position, float size, Transform parent)
-        where TNerve: INerve
+        where TNerve : INerve
         {
             var nerve = NerveModel.Get<TNerve>();
             var nerveConfig = new NerveConfig(nerve, position, size, LayerMask, parent);
 
             nerve.Configure(nerveConfig);
             nerve.Init();
-            
+
             return nerve;
         }
-        
-        
+
+
         // FACTORY //
         public static TNerve Get<TNerve>(params object[] args)
-        where TNerve: INerve
+        where TNerve : INerve
         {
             IFactory factoryCustom = null;
-            
-            if(args.Length > 0)
-                try{ factoryCustom = (IFactory)args[PARAMS_Factory]; } catch { Debug.Log("Custom factory not found! The instance will be created by default."); }
 
-            
+            if (args.Length > 0)
+                try { factoryCustom = (IFactory)args[PARAMS_Factory]; }
+                catch { Debug.Log("Custom factory not found! The instance will be created by default."); }
+
+
             var factory = (factoryCustom != null) ? factoryCustom : new NerveFactory();
             var instance = factory.Get<TNerve>(args);
-            
+
             return instance;
         }
 
     }
 
-    public interface INerve: IConfigurable, IActivable
+    public interface INerve : IConfigurable, IActivable
     {
         Vector3 Position { get; }
         void UpdateBond(Color color, params Vector3[] positions);
@@ -186,7 +187,7 @@ namespace APP.Brain
             Set<AxonDefault>(Constructor.Get((args) => GetAxonDefault(args)));
             Set<DendriteDefault>(Constructor.Get((args) => GetDendriteDefault(args)));
             Set<SensorDefault>(Constructor.Get((args) => GetSensorDefault(args)));
-        
+
         }
     }
 

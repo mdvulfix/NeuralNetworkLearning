@@ -8,7 +8,7 @@ using APP.Pool;
 
 namespace APP
 {
-    public class AsyncController : ModelController, IController, IUpdateble
+    public class AsyncController : ModelController, IAsyncController
     {
 
         private static List<IAwaiter> m_AwaiterIsReady;
@@ -17,7 +17,7 @@ namespace APP
         private static List<FuncAsyncInfo> m_FuncExecuteQueue;
         private IAwaiter m_FuncQueueAwaiter;
 
-        //private PoolController<Awaiter> m_PoolController;
+        private IPoolController m_PoolController;
 
         public event Action<FuncAsyncInfo> FuncAsyncExecuted;
 
@@ -30,7 +30,7 @@ namespace APP
         public override void Configure(params object[] args)
         {
             var config = (AsyncControllerConfig)args[PARAMS_Config];
-            
+
             if (m_AwaiterIsReady == null)
                 m_AwaiterIsReady = new List<IAwaiter>(m_AwaiterIsReadyLimit);
 
@@ -44,22 +44,20 @@ namespace APP
         {
             m_FuncQueueAwaiter = AwaiterModel.Get<AwaiterDefault>();
             var awaiterConfig = new AwaiterConfig(m_FuncQueueAwaiter, "FuncQueueAwaiter");
-            
+
             m_FuncQueueAwaiter.Configure(awaiterConfig);
             m_FuncQueueAwaiter.Init();
 
-            
 
-            //var poolableFactory = new FactoryAwaiter();
-            //var poolControllerConfig = new PoolControllerConfig(poolableFactory);
-            
-            //m_PoolController = PoolController<Awaiter>.Get(poolControllerFactory, poolControllerConfig);
-            
-            
-            
-            
-            
-            //m_PoolController.Init();
+
+            var poolableFactory = new AwaiterFactory();
+            var getPoolable = poolableFactory.Get<AwaiterDefault>(awaiterConfig);
+
+            var poolControllerConfig = new PoolControllerConfig(() => getPoolable);
+
+            m_PoolController = PoolController<AwaiterDefault>.Get();
+            m_PoolController.Configure(poolControllerConfig);
+            m_PoolController.Init();
 
 
 
@@ -68,7 +66,7 @@ namespace APP
 
         public override void Dispose()
         {
-            //m_PoolController.Dispose();
+            m_PoolController.Dispose();
             m_FuncQueueAwaiter.Dispose();
 
             base.Dispose();
@@ -76,8 +74,8 @@ namespace APP
 
         public void Update()
         {
-            //m_PoolController.Update();
-            
+            m_PoolController.Update();
+
             LimitUpdate();
             FuncQueueUpdate();
         }
@@ -101,54 +99,13 @@ namespace APP
         private bool GetAwaiter(out IAwaiter awaiter)
         {
             awaiter = null;
-            
-            //if ((m_AwaiterIsReady.Count < m_AwaiterIsReadyLimit))
-            //    LimitUpdate();
 
-            //awaiter = m_AwaiterIsReady[0];
+            if ((m_AwaiterIsReady.Count < m_AwaiterIsReadyLimit))
+                LimitUpdate();
+
+            awaiter = m_AwaiterIsReady[0];
             return true;
         }
-        
-        
-        private bool PopAwaiter(out IAwaiter awaiter)
-        {
-            awaiter = null;
-            /*
-            try
-            {
-                if (m_PoolController.Pop(out awaiter))
-                {
-                    awaiter.Initialized += OnAwaiterInitialized;
-                    awaiter.Disposed += OnAwaiterDisposed;
-                    awaiter.FuncStarted += OnAwaiterBusy;
-                    awaiter.FuncCompleted += OnAwaiterFuncComplete;
-
-                    awaiter.Init();
-                    return true;
-                }
-            }
-            catch (Exception exception) { ($"Pop awaiter is failed! Exception: {exception.Message}").Send(LogFormat.Warning); }
-    
-
-            ($"Pop awaiter not found!").Send(LogFormat.Warning);
-            */
-            return false;
-            
-        }
-
-        private void PushAwaiter(IAwaiter awaiter)
-        {
-            /*
-            awaiter.Initialized -= OnAwaiterInitialized;
-            awaiter.Disposed -= OnAwaiterDisposed;
-            awaiter.FuncStarted -= OnAwaiterBusy;
-            awaiter.FuncCompleted -= OnAwaiterFuncComplete;
-            awaiter.Dispose();
-
-            m_PoolController.Push(awaiter);
-            */
-        }
-        
 
         private void LimitUpdate()
         {
@@ -170,6 +127,49 @@ namespace APP
                     PopAwaiter(out var awaiter);
             }
         }
+
+        private bool PopAwaiter(out IAwaiter awaiter)
+        {
+            awaiter = null;
+
+            try
+            {
+                if (m_PoolController.Pop(out awaiter))
+                {
+
+                    awaiter.Initialized += OnAwaiterInitialized;
+                    awaiter.Disposed += OnAwaiterDisposed;
+                    awaiter.FuncStarted += OnAwaiterBusy;
+                    awaiter.FuncCompleted += OnAwaiterFuncComplete;
+
+                    awaiter.Init();
+                    return true;
+                }
+            }
+            catch (Exception exception) { ($"Pop awaiter is failed! Exception: {exception.Message}").Send(LogFormat.Warning); }
+
+
+            ($"Pop awaiter not found!").Send(LogFormat.Warning);
+
+            return false;
+
+        }
+
+        private void PushAwaiter(IAwaiter awaiter)
+        {
+
+            awaiter.Initialized -= OnAwaiterInitialized;
+            awaiter.Disposed -= OnAwaiterDisposed;
+            awaiter.FuncStarted -= OnAwaiterBusy;
+            awaiter.FuncCompleted -= OnAwaiterFuncComplete;
+            awaiter.Dispose();
+
+            m_PoolController.Push(awaiter);
+
+        }
+
+
+
 
 
         private void FuncQueueUpdate()
@@ -226,7 +226,33 @@ namespace APP
         }
 
 
+        public static AsyncController Get(params object[] args)
+        {
+            if (args.Length > 0)
+            {
+                try
+                {
+                    var config = (AsyncControllerConfig)args[PARAMS_Config];
+                    var instance = new AsyncController();
+                    instance.Configure(config);
+                    instance.Init();
+                    return instance;
+                }
+
+                catch { Debug.Log("Custom factory not found! The instance will be created by default."); }
+            }
+
+            return new AsyncController(); ;
+        }
+
     }
+
+    public interface IAsyncController : IController, IConfigurable, IUpdateble
+    {
+        void ExecuteAsync(Func<Action<bool>, IEnumerator> func);
+    }
+
+
 
     public struct AsyncControllerConfig : IConfig
     {
