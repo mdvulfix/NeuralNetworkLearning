@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace APP
@@ -82,10 +83,13 @@ namespace APP
             }
         }
 
+
+
         public void FuncComplite(bool isReady)
         {
             StopCoroutine(Func());
             Func = null;
+
 
             SetState(isReady);
             Debug.Log("Async operation finished...");
@@ -94,14 +98,16 @@ namespace APP
 
         public void Cancel()
         {
-            StopCoroutine(Func());
-            Func = null;
+            if (Func != null)
+            {
+                StopCoroutine(Func());
+                Func = null;
+            }
 
-            var isReady = true;
+            var isReady = false;
             SetState(isReady);
 
             Debug.LogWarning("Async operation cancelled!");
-            FuncCompleted?.Invoke(m_Instance);
         }
 
 

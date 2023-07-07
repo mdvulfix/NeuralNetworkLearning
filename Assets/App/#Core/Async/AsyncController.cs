@@ -20,7 +20,7 @@ namespace APP
         private static List<IAwaiter> m_AwaiterIsReady;
         private int m_AwaiterIsReadyLimit = 2;
 
-        private static List<FuncAsyncInfo> m_FuncExecuteQueue;
+        private static List<IAsyncInfo> m_FuncExecuteQueue;
         private IAwaiter m_FuncQueueAwaiter;
 
 
@@ -30,7 +30,7 @@ namespace APP
 
 
 
-        public event Action<FuncAsyncInfo> FuncAsyncExecuted;
+        public event Action<IAsyncInfo> FuncAsyncExecuted;
 
         public AsyncController() { }
         public AsyncController(params object[] args)
@@ -58,7 +58,7 @@ namespace APP
                 m_AwaiterIsReady = new List<IAwaiter>(m_AwaiterIsReadyLimit);
 
             if (m_FuncExecuteQueue == null)
-                m_FuncExecuteQueue = new List<FuncAsyncInfo>(100);
+                m_FuncExecuteQueue = new List<IAsyncInfo>(100);
 
 
             // SET AWAITER //
@@ -111,6 +111,7 @@ namespace APP
                 m_FuncExecuteQueue.Add(new FuncAsyncInfo(awaiter, func));
             }
         }
+
 
         private bool GetAwaiter(out IAwaiter awaiter)
         {
@@ -195,7 +196,7 @@ namespace APP
 
         private IEnumerator FuncQueueExecuteAsync(Action<bool> callback)
         {
-            var funcsReadyToBeExecuted = (from FuncAsyncInfo funcInfo in m_FuncExecuteQueue
+            var funcsReadyToBeExecuted = (from IAsyncInfo funcInfo in m_FuncExecuteQueue
                                           where funcInfo.Awaiter.IsReady == true
                                           select funcInfo).ToArray();
 
@@ -281,7 +282,7 @@ namespace APP
         public Transform AsyncHolder { get; private set; }
     }
 
-    public struct FuncAsyncInfo
+    public struct FuncAsyncInfo : IAsyncInfo
     {
         public IAwaiter Awaiter { get; private set; }
         public Func<Action<bool>, IEnumerator> FuncAsync { get; private set; }
@@ -292,4 +293,12 @@ namespace APP
             Awaiter = awaiter;
         }
     }
+
+    public interface IAsyncInfo
+    {
+        IAwaiter Awaiter { get; }
+        Func<Action<bool>, IEnumerator> FuncAsync { get; }
+
+    }
+
 }

@@ -16,7 +16,7 @@ namespace APP.Test
         private static Transform m_ObjSpawnHolder;
         private static Transform m_ObjAsyncHolder;
 
-        //public static AsyncController AsyncController => m_Controller;
+        public IAsyncController m_AsyncController;
 
         private List<IAsyncController> m_Controllers;
 
@@ -30,8 +30,6 @@ namespace APP.Test
 
                 //m_Controllers.Add();
             }
-
-
 
         }
 
@@ -59,10 +57,31 @@ namespace APP.Test
         private void Start()
         {
 
-            var controller = new AsyncController();
+            m_AsyncController = new AsyncController();
             var config = new AsyncControllerConfig(m_ObjAsyncHolder);
-            controller.Configure(config);
-            controller.Init();
+            m_AsyncController.Configure(config);
+            m_AsyncController.Init();
+
+            m_AsyncController.ExecuteAsync(SpawnWawesAsync);
+
+        }
+
+        private IEnumerator SpawnWawesAsync(Action<bool> callback)
+        {
+            for (int i = 0; i < 5; i++)
+            {
+                var label = "Boll " + i;
+                var position = new Vector3(Random.Range(0f, 2f), Random.Range(0f, 3f), Random.Range(0f, 2f));
+                var boll = Spawn<BollDefault>(label, position, m_Boll, m_ObjSpawnHolder);
+                boll.Configure();
+                boll.Init();
+                boll.Activate();
+
+                m_AsyncController.ExecuteAsync(boll.SetColorAsync);
+
+            }
+
+            yield return new WaitForSeconds(10f);
 
             for (int i = 0; i < 5; i++)
             {
@@ -73,17 +92,17 @@ namespace APP.Test
                 boll.Init();
                 boll.Activate();
 
+                m_AsyncController.ExecuteAsync(boll.SetColorAsync);
 
-                //m_Controllers[0].ExecuteAsync(cache.LoadAsync);
-
-
-                controller.ExecuteAsync(boll.SetColorAsync);
-
-                //HandlerAsync.ExecuteAsync(cache.LoadAsync);
-                //m_Controller.ExecuteAsync(cache.LoadAsync);
-                //m_Controller2.ExecuteAsync(cache.LoadAsync);
             }
+
+            callback.Invoke(true);
+
         }
+
+
+
+
 
         private void Update()
         {
