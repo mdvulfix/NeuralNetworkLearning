@@ -30,6 +30,8 @@ namespace APP
         public bool IsActivated => m_IsActivated;
         public bool IsAnimated => m_IsAnimated;
 
+        public GameObject Obj => gameObject;
+
         public event Action<IMessage> Message;
 
         // LOAD //
@@ -100,7 +102,7 @@ namespace APP
         }
 
         protected virtual bool VerifyOnConfigure()
-        {            
+        {
             if (m_IsConfigured == true)
             {
                 Send($"Instance is already configured.", LogFormat.Warning);
@@ -191,70 +193,77 @@ namespace APP
         }
 
 
-        public void OnMessage(IMessage message) 
+        public void OnMessage(IMessage message)
             => Send($"{message.Sender}: {message.Text}", message.LogFormat);
 
 
         // COMPONENT //
         public TComponent SetComponent<TComponent>()
-        where TComponent: UComponent
+        where TComponent : UComponent
             => gameObject.AddComponent<TComponent>();
 
         public bool GetComponent<TComponent>(out TComponent component)
-        where TComponent: UComponent
+        where TComponent : UComponent
             => gameObject.TryGetComponent<TComponent>(out component);
-        
-        
-        // UNITY //
-        private void Awake() 
-        { 
-            Load();
-            Configure();   
-        }
-        
-        private void OnEnable() 
-        { 
-            Record(); 
-            Init(); 
-            Activate();
-        } 
-        
-        private void Start() 
-        {
-            
-        }
-        
-        private void OnDisable() 
-        { 
-            Deactivate();
-            Clear(); 
-            Dispose();
-        } 
 
-        
-        
+        public void SetParent(Transform parent)
+            => gameObject.transform.SetParent(parent);
+
+
+
+        // UNITY //
+        private void Awake()
+        {
+            Load();
+            Configure();
+        }
+
+        private void OnEnable()
+        {
+            Record();
+            Init();
+            Activate();
+        }
+
+        private void Start()
+        {
+
+        }
+
+        private void OnDisable()
+        {
+            Deactivate();
+            Clear();
+            Dispose();
+        }
+
+
     }
 
 
 
     public interface ILoadable
-    {       
+    {
         void Load();
     }
 
     public interface IActivable
-    {        
+    {
         void Activate();
         void Deactivate();
     }
 
     public interface IComponent
-    {       
+    {
+        GameObject Obj { get; }
+
         TComponent SetComponent<TComponent>()
-        where TComponent: UComponent;
+        where TComponent : UComponent;
 
         bool GetComponent<TComponent>(out TComponent component)
-        where TComponent: UComponent;
+        where TComponent : UComponent;
+
+        void SetParent(Transform parent);
 
     }
 

@@ -23,8 +23,9 @@ namespace APP
             }
 
             var label = $"Awaiter {this.GetHashCode()}";
+            var parent = new GameObject("Async").transform;
+            var config = new AwaiterConfig(this, label, parent);
 
-            var config = new AwaiterConfig(this, label);
             base.Configure(config);
             Send($"{this.GetName()} was configured by default!");
         }

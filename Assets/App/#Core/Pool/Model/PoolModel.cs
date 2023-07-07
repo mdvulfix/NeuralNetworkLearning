@@ -64,7 +64,7 @@ namespace APP
         }
     }
 
-    public interface IPool : IEnumerable, IConfigurable, IUpdateble
+    public interface IPool : IEnumerable, IConfigurable
     {
         int Count { get; }
 

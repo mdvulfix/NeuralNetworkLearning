@@ -23,6 +23,8 @@ namespace APP
         public bool IsInitialized => m_IsInitialized;
         public bool IsActivated => m_IsActivated;
 
+        public GameObject Obj => gameObject;
+
         public event Action<IMessage> Message;
 
         // CACHE //
@@ -33,6 +35,7 @@ namespace APP
         public virtual void Configure(params object[] args) => OnConfigureComplete();
         public virtual void Init() => OnInitComplete();
         public virtual void Dispose() => OnDisposeComplete();
+
 
 
         // ACTIVATE //
@@ -177,11 +180,14 @@ namespace APP
         where TComponent : UComponent
             => gameObject.TryGetComponent<TComponent>(out component);
 
-
+        public void SetParent(Transform parent)
+            => gameObject.transform.SetParent(parent);
 
         // UNITY //
         private void OnEnable() { Record(); }
         private void OnDisable() { Clear(); }
+
+
     }
 
     public interface ICache

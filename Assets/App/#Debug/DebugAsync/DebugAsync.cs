@@ -7,11 +7,14 @@ using Random = UnityEngine.Random;
 
 namespace APP.Test
 {
-
-    public class TestAsync : MonoBehaviour
+    [Serializable]
+    public class DebugAsync : MonoBehaviour
     {
+        [SerializeField] private GameObject m_Boll;
 
-        [SerializeField] private Transform FOLDER_SPAWNED;
+
+        private static Transform m_ObjSpawnHolder;
+        private static Transform m_ObjAsyncHolder;
 
         //public static AsyncController AsyncController => m_Controller;
 
@@ -34,6 +37,14 @@ namespace APP.Test
 
         private void OnEnable()
         {
+
+            if (m_ObjSpawnHolder == null)
+                m_ObjSpawnHolder = new GameObject("Spawn").transform;
+
+            if (m_ObjAsyncHolder == null)
+                m_ObjAsyncHolder = new GameObject("Async").transform;
+
+
             //foreach (var controller in m_Controllers)
             //    controller.Init();
 
@@ -49,19 +60,24 @@ namespace APP.Test
         {
 
             var controller = new AsyncController();
-            controller.Configure(new AsyncControllerConfig());
+            var config = new AsyncControllerConfig(m_ObjAsyncHolder);
+            controller.Configure(config);
             controller.Init();
 
-            for (int i = 0; i < 1; i++)
+            for (int i = 0; i < 5; i++)
             {
-                var label = "Cahce " + i;
-                var cache = Spawn(label, FOLDER_SPAWNED);
-                cache.Setup(label, Random.Range(1, 4));
+                var label = "Boll " + i;
+                var position = new Vector3(Random.Range(0f, 2f), Random.Range(0f, 3f), Random.Range(0f, 2f));
+                var boll = Spawn<BollDefault>(label, position, m_Boll, m_ObjSpawnHolder);
+                boll.Configure();
+                boll.Init();
+                boll.Activate();
 
 
                 //m_Controllers[0].ExecuteAsync(cache.LoadAsync);
 
-                controller.ExecuteAsync(cache.LoadAsync);
+
+                controller.ExecuteAsync(boll.SetColorAsync);
 
                 //HandlerAsync.ExecuteAsync(cache.LoadAsync);
                 //m_Controller.ExecuteAsync(cache.LoadAsync);
@@ -76,17 +92,30 @@ namespace APP.Test
         }
 
 
-        private Cache Spawn(string name, Transform parent)
+        private T Spawn<T>(string name, Vector3 position, GameObject prefab, Transform parent)
+        where T : Component
         {
-            var obj = new GameObject(name);
+            GameObject obj;
+
+            if (prefab == null)
+            {
+                obj = new GameObject();
+                obj.AddComponent<T>();
+                obj.transform.position = position;
+            }
+            else
+            {
+                obj = Instantiate(prefab, position, Quaternion.identity);
+            }
 
             if (parent == null)
                 parent = transform;
 
+            obj.name = name;
             obj.transform.SetParent(parent);
             obj.SetActive(false);
 
-            return obj.AddComponent<Cache>();
+            return obj.GetComponent<T>();
         }
 
     }

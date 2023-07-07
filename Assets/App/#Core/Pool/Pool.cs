@@ -4,16 +4,14 @@ using UnityEngine;
 
 namespace APP.Pool
 {
-    public class Pool<TPoolable> : PoolDefault, IPool<TPoolable>, IConfigurable, IUpdateble
+    public class Pool<TPoolable> : PoolDefault, IPool<TPoolable>
     where TPoolable : IPoolable
     {
 
         public Pool() { }
         public Pool(params object[] args)
-        {
-            Configure(args);
-            Init();
-        }
+            => Configure(args);
+
 
         public bool Push(TPoolable poolable)
             => Push<TPoolable>(poolable);
@@ -31,37 +29,24 @@ namespace APP.Pool
     }
 
 
-    public class PoolDefault : PoolModel, IPool, IConfigurable, IUpdateble
+    public class PoolDefault : PoolModel, IPool, IConfigurable
     {
-
-
-
-        private Transform m_Root;
-        private int m_Limit = 1;
-
-        private Func<IPoolable> GetPoolable;
-
 
 
         public PoolDefault() { }
         public PoolDefault(params object[] args)
-        {
-            Configure(args);
-            Init();
-        }
+            => Configure(args);
+
 
         public override void Configure(params object[] args)
         {
             var config = (PoolConfig)args[PARAM_INDEX_Config];
-            m_Limit = config.Limit;
-
-            GetPoolable = () => config.GetPoolable();
             base.Configure(args);
         }
 
         public override void Init()
         {
-            PoolUpToLimit();
+
             base.Init();
         }
 
@@ -72,7 +57,6 @@ namespace APP.Pool
             base.Push(poolable);
             return true;
         }
-
 
         public bool Pop<TPoolable>(out TPoolable poolable)
         where TPoolable : IPoolable
@@ -103,25 +87,7 @@ namespace APP.Pool
         }
 
 
-        public virtual void Update()
-            => PoolUpToLimit();
 
-
-        private void PoolUpToLimit()
-        {
-            if (Count >= 0)
-            {
-                if (m_Limit > 0 && Count < m_Limit)
-                {
-                    var upToLimit = m_Limit - Count;
-                    for (int i = 0; i < upToLimit; i++)
-                        Push(GetPoolable());
-                }
-
-                if (m_Limit == 0 && Count == 0)
-                    Push(GetPoolable());
-            }
-        }
 
 
         public static PoolDefault Get(params object[] args)

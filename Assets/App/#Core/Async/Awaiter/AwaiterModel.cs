@@ -6,8 +6,7 @@ namespace APP
 {
     public class AwaiterModel : ModelCacheable
     {
-        private static Transform ROOT;
-        private static Transform ROOT_POOL;
+        private Transform m_Parent;
 
         private IAwaiter m_Instance;
 
@@ -37,11 +36,9 @@ namespace APP
             m_Instance = config.Instance;
             transform.name = config.Label;
 
-            if (ROOT == null)
-                ROOT = SceneRoot.AWAITER;
+            if (m_Parent == null)
+                m_Parent = config.Parent;
 
-            if (ROOT_POOL == null)
-                ROOT_POOL = SceneRoot.AWAITER_POOL;
 
             base.Configure();
         }
@@ -50,17 +47,23 @@ namespace APP
         {
 
 
+            SetParent(m_Parent);
             base.Init();
         }
 
+        public override void Dispose()
+        {
+            Cancel();
+            base.Dispose();
+        }
 
 
-        public void Run(Func<Action<bool>, IEnumerator> func)
+        public void FuncRun(Func<Action<bool>, IEnumerator> func)
         {
             var isReady = false;
             SetState(isReady);
 
-            Func = () => func(Callback);
+            Func = () => func(FuncComplite);
 
             StopCoroutine(Func());
 
@@ -75,11 +78,21 @@ namespace APP
             catch (Exception exception)
             {
                 Debug.Log(exception.Message);
-                Stop();
+                Cancel();
             }
         }
 
-        public void Stop()
+        public void FuncComplite(bool isReady)
+        {
+            StopCoroutine(Func());
+            Func = null;
+
+            SetState(isReady);
+            Debug.Log("Async operation finished...");
+            FuncCompleted?.Invoke(m_Instance);
+        }
+
+        public void Cancel()
         {
             StopCoroutine(Func());
             Func = null;
@@ -87,15 +100,10 @@ namespace APP
             var isReady = true;
             SetState(isReady);
 
-            Debug.Log("Async operation finished...");
+            Debug.LogWarning("Async operation cancelled!");
             FuncCompleted?.Invoke(m_Instance);
         }
 
-
-        private void Callback(bool isReady)
-        {
-            SetState(isReady);
-        }
 
         private void SetState(bool isReady)
         {
@@ -159,18 +167,21 @@ namespace APP
 
     public struct AwaiterConfig : IConfig
     {
-        public AwaiterConfig(IAwaiter instance, string label)
+        public AwaiterConfig(IAwaiter instance, string label, Transform parent)
         {
             Instance = instance;
+
             Label = label;
+            Parent = parent;
         }
 
         public IAwaiter Instance { get; private set; }
         public string Label { get; private set; }
+        public Transform Parent { get; private set; }
 
     }
 
-    public interface IAwaiter : IPoolable, IActivable
+    public interface IAwaiter : IPoolable, IActivable, IComponent
     {
         bool IsReady { get; }
 
@@ -180,8 +191,9 @@ namespace APP
         event Action<IAwaiter> FuncCompleted;
         event Action<IAwaiter, bool> StateChanged;
 
-        void Run(Func<Action<bool>, IEnumerator> func);
-        void Stop();
+        void FuncRun(Func<Action<bool>, IEnumerator> func);
+        void FuncComplite(bool isReady);
+        void Cancel();
     }
 
 
@@ -190,11 +202,14 @@ namespace APP
 
     public partial class AwaiterFactory : Factory<IAwaiter>, IFactory
     {
+
         public AwaiterFactory()
         {
             Set<AwaiterDefault>(Constructor.Get((args) => GetAwaiterDefault(args)));
 
         }
+
+
 
     }
 

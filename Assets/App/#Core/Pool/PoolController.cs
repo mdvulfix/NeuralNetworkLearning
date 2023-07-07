@@ -10,50 +10,23 @@ namespace APP.Pool
     public class PoolController<TPoolable> : PoolController, IPoolController<TPoolable>
     where TPoolable : IPoolable
     {
-        private static IPool<TPoolable> m_Pool;
-
-        private IFactory m_FactoryPoolable;
-        //private IFactory<TPoolable, TPoolableConfig> m_FactoryPoolable;
 
         public PoolController() { }
         public PoolController(params object[] args)
-        {
-            Configure(args);
-            Init();
-        }
-
+            => Configure(args);
 
 
         public bool Push(TPoolable poolable)
-        {
-            poolable.Dispose();
-
-            return m_Pool.Push(poolable);
-        }
+            => Push<TPoolable>(poolable);
 
         public bool Pop(out TPoolable poolable)
-        {
-            if (m_Pool.Pop(out poolable))
-            {
-                poolable.Init();
-                return true;
-            }
-
-            return false;
-        }
+            => Pop<TPoolable>(out poolable);
 
         public bool Peek(out TPoolable poolable)
-        {
-            if (m_Pool.Peek(out poolable))
-            {
-                poolable.Init();
-                return true;
-            }
-
-            return false;
-        }
+            => Peek<TPoolable>(out poolable);
 
 
+        // FACTORY //
         public static new PoolController<TPoolable> Get(params object[] args)
         {
             if (args.Length > 0)
@@ -74,12 +47,12 @@ namespace APP.Pool
         }
     }
 
-
     public class PoolController : ModelController, IPoolController
     {
-        private static IPool m_Pool;
+        private static Transform m_PoolHolder;
 
-        private GetPoolableDelegate m_GetPoolableDelegate;
+        private IPool m_Pool;
+
 
         public PoolController() { }
         public PoolController(params object[] args)
@@ -91,16 +64,15 @@ namespace APP.Pool
         {
             var config = (PoolControllerConfig)args[PARAMS_Config];
 
-            m_GetPoolableDelegate = config.GetPoolableDelegate;
-
             base.Configure();
         }
 
         public override void Init()
         {
-            var limit = 5;
-            var poolConfig = new PoolConfig(limit, m_GetPoolableDelegate);
+            if (m_PoolHolder == null)
+                m_PoolHolder = new GameObject("Pool").transform;
 
+            var poolConfig = new PoolConfig();
 
             if (m_Pool == null)
             {
@@ -109,19 +81,14 @@ namespace APP.Pool
                 m_Pool.Init();
             }
 
-
             base.Init();
-        }
-
-        public virtual void Update()
-        {
-            m_Pool.Update();
         }
 
 
         public bool Push<TPoolable>(TPoolable poolable)
         where TPoolable : IPoolable
         {
+            SetParent(poolable, m_PoolHolder);
             return m_Pool.Push(poolable);
         }
 
@@ -154,36 +121,22 @@ namespace APP.Pool
         }
 
 
-        public bool Push(IPoolable poolable)
+
+
+        public void SetPool(IPool pool)
+            => m_Pool = pool;
+
+
+        public void SetParent(IPoolable poolable, Transform parent)
         {
-            return m_Pool.Push(poolable);
+            if (poolable is IComponent)
+                ((IComponent)poolable).SetParent(parent);
         }
 
-        public bool Pop(out IPoolable poolable)
-        {
-            poolable = default(IPoolable);
 
-            if (m_Pool.Pop(out var instance))
-            {
-                poolable = (IPoolable)instance;
-                return true;
-            }
+        public int CountPoolables()
+            => m_Pool.Count;
 
-            return false;
-        }
-
-        public bool Peek(out IPoolable poolable)
-        {
-            poolable = default(IPoolable);
-
-            if (m_Pool.Peek(out var instance))
-            {
-                poolable = (IPoolable)instance;
-                return true;
-            }
-
-            return false;
-        }
 
 
 
@@ -212,20 +165,31 @@ namespace APP.Pool
 
     public struct PoolControllerConfig : IConfig
     {
-        public GetPoolableDelegate GetPoolableDelegate { get; private set; }
 
-        public PoolControllerConfig(GetPoolableDelegate getPoolable)
+
+        public PoolControllerConfig(Transform poolHolder)
         {
-            GetPoolableDelegate = getPoolable;
+            PoolHolder = poolHolder;
         }
+
+        public Transform PoolHolder { get; private set; }
+
     }
 
 
 
+    public interface IPoolController<TPoolable> : IPoolController
+    where TPoolable : IPoolable
+    {
+
+        bool Peek(out TPoolable poolable);
+        bool Pop(out TPoolable poolable);
+        bool Push(TPoolable poolable);
 
 
-    public interface IPoolController : IController, IUpdateble
+    }
 
+    public interface IPoolController : IController
     {
         bool Peek<TPoolable>(out TPoolable poolable)
         where TPoolable : IPoolable;
@@ -236,21 +200,14 @@ namespace APP.Pool
         bool Push<TPoolable>(TPoolable poolable)
         where TPoolable : IPoolable;
 
+        void SetPool(IPool pool);
 
-        bool Peek(out IPoolable poolable);
-        bool Pop(out IPoolable poolable);
-        bool Push(IPoolable poolable);
+        int CountPoolables();
 
 
     }
 
-    public interface IPoolController<TPoolable> : IPoolController
-    where TPoolable : IPoolable
-    {
-        bool Peek(out TPoolable poolable);
-        bool Pop(out TPoolable poolable);
-        bool Push(TPoolable poolable);
-    }
+
 
 
 }

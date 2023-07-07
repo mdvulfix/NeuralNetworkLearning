@@ -11,13 +11,24 @@ namespace APP
     public class AsyncController : ModelController, IAsyncController
     {
 
+
+        [SerializeField] private static Transform m_AsyncHolder;
+
+        [SerializeField] private IFactory m_AwaiterFactory;
+        private Func<IAwaiter> GetAwaiterFunc;
+
         private static List<IAwaiter> m_AwaiterIsReady;
-        private int m_AwaiterIsReadyLimit = 5;
+        private int m_AwaiterIsReadyLimit = 2;
 
         private static List<FuncAsyncInfo> m_FuncExecuteQueue;
         private IAwaiter m_FuncQueueAwaiter;
 
+
+
         private IPoolController m_PoolController;
+
+
+
 
         public event Action<FuncAsyncInfo> FuncAsyncExecuted;
 
@@ -31,33 +42,42 @@ namespace APP
         {
             var config = (AsyncControllerConfig)args[PARAMS_Config];
 
-            if (m_AwaiterIsReady == null)
-                m_AwaiterIsReady = new List<IAwaiter>(m_AwaiterIsReadyLimit);
-
-            if (m_FuncExecuteQueue == null)
-                m_FuncExecuteQueue = new List<FuncAsyncInfo>(100);
+            if (m_AsyncHolder == null)
+                m_AsyncHolder = config.AsyncHolder;
 
             base.Configure(args);
         }
 
         public override void Init()
         {
-            m_FuncQueueAwaiter = AwaiterModel.Get<AwaiterDefault>();
-            var awaiterConfig = new AwaiterConfig(m_FuncQueueAwaiter, "FuncQueueAwaiter");
+
+            if (m_AsyncHolder == null)
+                m_AsyncHolder = new GameObject("Async").transform;
+
+            if (m_AwaiterIsReady == null)
+                m_AwaiterIsReady = new List<IAwaiter>(m_AwaiterIsReadyLimit);
+
+            if (m_FuncExecuteQueue == null)
+                m_FuncExecuteQueue = new List<FuncAsyncInfo>(100);
+
+
+            // SET AWAITER //
+            if (m_AwaiterFactory == null)
+                m_AwaiterFactory = new AwaiterFactory();
+
+            GetAwaiterFunc = () => m_AwaiterFactory.Get<AwaiterDefault>();
+
+            m_FuncQueueAwaiter = GetAwaiterFunc();
+            var awaiterConfig = new AwaiterConfig(m_FuncQueueAwaiter, "FuncQueueAwaiter", m_AsyncHolder);
 
             m_FuncQueueAwaiter.Configure(awaiterConfig);
             m_FuncQueueAwaiter.Init();
 
-
-
-            var poolableFactory = new AwaiterFactory();
-            var poolControllerConfig = new PoolControllerConfig(() => poolableFactory.Get<AwaiterDefault>());
-
+            // SET POOL //
+            var poolControllerConfig = new PoolControllerConfig(m_AsyncHolder);
             m_PoolController = PoolController.Get();
             m_PoolController.Configure(poolControllerConfig);
             m_PoolController.Init();
-
-
 
             base.Init();
         }
@@ -70,11 +90,9 @@ namespace APP
             base.Dispose();
         }
 
+
         public void Update()
         {
-            m_PoolController.Update();
-
-            LimitUpdate();
             FuncQueueUpdate();
         }
 
@@ -85,7 +103,7 @@ namespace APP
             {
                 if (awaiter != null && awaiter.IsReady == true)
                 {
-                    awaiter.Run(func);
+                    awaiter.FuncRun(func);
                     FuncAsyncExecuted?.Invoke(new FuncAsyncInfo(awaiter, func));
                     return;
                 }
@@ -99,13 +117,16 @@ namespace APP
             awaiter = null;
 
             if ((m_AwaiterIsReady.Count < m_AwaiterIsReadyLimit))
-                LimitUpdate();
+                AwaiterLimitUpdate();
 
-            awaiter = m_AwaiterIsReady[0];
+
+            awaiter = m_AwaiterIsReady.First();
             return true;
         }
 
-        private void LimitUpdate()
+
+
+        private void AwaiterLimitUpdate()
         {
             // Check awaiters in ready state limit;
             var awaiterIsReadyNumber = m_AwaiterIsReady.Count;
@@ -115,43 +136,19 @@ namespace APP
             {
                 var number = awaiterIsReadyNumber - m_AwaiterIsReadyLimit;
                 for (int i = 0; i < number; i++)
-                    PushAwaiter(m_AwaiterIsReady[i]);
+                {
+                    PushAwaiter(m_AwaiterIsReady.First());
+                }
+
             }
             // else, pop awaiters from the pool in the number of missing up to the limit
             else
             {
+
                 var number = m_AwaiterIsReadyLimit - awaiterIsReadyNumber;
                 for (int i = 0; i < number; i++)
                     PopAwaiter(out var awaiter);
             }
-        }
-
-        private bool PopAwaiter(out IAwaiter awaiter)
-        {
-            awaiter = null;
-
-            try
-            {
-                if (m_PoolController.Pop(out awaiter))
-                {
-
-                    awaiter.Initialized += OnAwaiterInitialized;
-                    awaiter.Disposed += OnAwaiterDisposed;
-                    awaiter.FuncStarted += OnAwaiterBusy;
-                    awaiter.FuncCompleted += OnAwaiterFuncComplete;
-
-                    awaiter.Init();
-                    awaiter.Activate();
-                    return true;
-                }
-            }
-            catch (Exception exception) { ($"Pop awaiter is failed! Exception: {exception.Message}").Send(LogFormat.Warning); }
-
-
-            ($"Pop awaiter not found!").Send(LogFormat.Warning);
-
-            return false;
-
         }
 
         private void PushAwaiter(IAwaiter awaiter)
@@ -168,14 +165,32 @@ namespace APP
 
         }
 
+        private bool PopAwaiter(out IAwaiter awaiter)
+        {
+            if (!m_PoolController.Pop(out awaiter))
+            {
+                awaiter = GetAwaiterFunc();
+                awaiter.Configure(new AwaiterConfig(awaiter, "Awaiter " + awaiter.GetHashCode(), m_AsyncHolder));
+            }
 
+            awaiter.Initialized += OnAwaiterInitialized;
+            awaiter.Disposed += OnAwaiterDisposed;
+            awaiter.FuncStarted += OnAwaiterBusy;
+            awaiter.FuncCompleted += OnAwaiterFuncComplete;
+
+            awaiter.Init();
+            awaiter.Activate();
+
+            return true;
+
+        }
 
 
 
         private void FuncQueueUpdate()
         {
             if (m_FuncQueueAwaiter.IsReady)
-                m_FuncQueueAwaiter.Run(FuncQueueExecuteAsync);
+                m_FuncQueueAwaiter.FuncRun(FuncQueueExecuteAsync);
         }
 
         private IEnumerator FuncQueueExecuteAsync(Action<bool> callback)
@@ -192,7 +207,7 @@ namespace APP
                     if (m_FuncExecuteQueue.Contains(info))
                         m_FuncExecuteQueue.Remove(info);
 
-                    info.Awaiter.Run(info.FuncAsync);
+                    info.Awaiter.FuncRun(info.FuncAsync);
                     FuncAsyncExecuted?.Invoke(info);
                 }
             }
@@ -218,11 +233,14 @@ namespace APP
         {
             if (m_AwaiterIsReady.Contains(awaiter))
                 m_AwaiterIsReady.Remove(awaiter);
+
+            AwaiterLimitUpdate();
         }
 
         private void OnAwaiterFuncComplete(IAwaiter awaiter)
         {
             m_AwaiterIsReady.Add(awaiter);
+            AwaiterLimitUpdate();
         }
 
 
@@ -255,7 +273,12 @@ namespace APP
 
     public struct AsyncControllerConfig : IConfig
     {
+        public AsyncControllerConfig(Transform asyncHolder)
+        {
+            AsyncHolder = asyncHolder;
+        }
 
+        public Transform AsyncHolder { get; private set; }
     }
 
     public struct FuncAsyncInfo
